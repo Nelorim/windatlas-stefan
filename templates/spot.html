@@ -1,0 +1,7 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{spot}} – WindAtlas</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><h1>{{spot}}</h1><nav><a href="/">Dashboard</a><a href="/upload">CSV hochladen</a></nav></header>
+<main>
+<section class="card"><h2>Jahres-Heatmap {{year}}</h2><form><select name="year" onchange="this.form.submit()">{% for y in years %}<option value="{{y}}" {% if y==year %}selected{% endif %}>{{y}}</option>{% endfor %}</select></form>
+<div class="heatmap">{% for m in cal %}<div class="month"><h3>{{m.month}}</h3><div class="days">{% for d in m.days %}<div class="day" title="{{m.month}} {{d.day}} – {{d.class}}{% if d.max %} – max {{'%.1f'|format(d.max)}} kn{% endif %}" style="background:{{d.color}}">{{d.day}}</div>{% endfor %}</div></div>{% endfor %}</div></section>
+<section class="card"><h2>Tagesliste</h2><table><thead><tr><th>Datum</th><th>Klasse</th><th>Max kn</th><th>Ø kn</th><th>Böe kn</th><th>Quelle</th></tr></thead><tbody>{% for r in rows %}<tr><td>{{r.date.date()}}</td><td>{{r['class']}}</td><td>{{'%.1f'|format(r.max_speed) if r.max_speed==r.max_speed else ''}}</td><td>{{'%.1f'|format(r.avg_speed) if r.avg_speed==r.avg_speed else ''}}</td><td>{{'%.1f'|format(r.max_gust) if r.max_gust==r.max_gust else ''}}</td><td>{{r.source_file}}</td></tr>{% endfor %}</tbody></table></section>
+</main></body></html>

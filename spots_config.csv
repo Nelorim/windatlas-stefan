@@ -1,0 +1,10 @@
+spot,country,region,latitude,longitude,source_priority
+Berlingen,Switzerland,Bodensee,47.6720,9.0200,real_csv
+Silvaplana,Switzerland,Engadin,46.4590,9.7940,real_csv_required
+Loissin,Germany,Greifswalder Bodden,54.1120,13.5300,real_csv
+Malcesine,Italy,Lake Garda,45.7640,10.8080,real_csv_required
+Colico,Italy,Lake Como,46.1370,9.3770,real_csv_required
+Jambiani,Tanzania,Zanzibar,-6.3210,39.5460,real_csv
+Jeneponto,Indonesia,Mallasoro,-5.6700,119.7400,real_csv
+Viana do Castelo,Portugal,Praia Norte,41.6930,-8.8490,real_csv
+Softades Cyprus,Cyprus,Larnaka / GuideSpot,34.8290,33.6040,real_csv

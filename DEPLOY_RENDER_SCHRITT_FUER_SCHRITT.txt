@@ -1,0 +1,23 @@
+SCHRITT FUER SCHRITT: WINDATLAS ONLINE STELLEN
+
+1. GitHub Konto verwenden oder erstellen.
+2. Neues Repository erstellen, z.B. windatlas-stefan.
+3. Alle Dateien aus diesem Ordner hochladen.
+4. Render.com oeffnen und anmelden.
+5. New + anklicken.
+6. Web Service auswaehlen.
+7. GitHub verbinden.
+8. Repository windatlas-stefan auswaehlen.
+9. Render liest render.yaml automatisch.
+10. Create Web Service anklicken.
+11. Warten bis Status Live erscheint.
+12. Die angezeigte URL kopieren, z.B. https://windatlas-stefan.onrender.com
+13. Diese URL auf Android/iPhone/Mac teilen.
+
+Android:
+- URL in Chrome oeffnen.
+- Drei Punkte > Zum Startbildschirm hinzufuegen.
+
+iPhone:
+- URL in Safari oeffnen.
+- Teilen > Zum Home-Bildschirm.

@@ -1,0 +1,7 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>WindAtlas Stefan 4.0</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<header><h1>WindAtlas Stefan 4.0</h1><p>Portal mit Realdaten, Jahres-Heatmap und teilbarem Browser-Dashboard</p><nav><a href="/">Dashboard</a><a href="/upload">CSV hochladen</a></nav></header>
+<main>
+<section class="card"><h2>Gesamtübersicht nach Disziplin</h2><table><thead><tr><th>Spot</th><th>Daten-Tage</th><th>Foil ≥8</th><th>Foil sehr gut</th><th>Twintip ≥12</th><th>Twintip optimal</th><th>Starkwind</th></tr></thead><tbody>{% for r in summary %}<tr><td><a href="/spot/{{r.spot}}">{{r.spot}}</a></td><td>{{r.days_data}}</td><td>{{r.foil_days}}</td><td>{{r.foil_verygood}}</td><td>{{r.twintip_days}}</td><td>{{r.twintip_optimal}}</td><td>{{r.strong_days}}</td></tr>{% endfor %}</tbody></table></section>
+<section class="card"><h2>Farbcode</h2><div class="legend">{% for name, color in colors.items() %}<span><i style="background:{{color}}"></i>{{name}}</span>{% endfor %}</div></section>
+<section class="card"><h2>Geladene Realdaten-Dateien</h2>{% if files %}<ul>{% for f in files %}<li>{{f}}</li>{% endfor %}</ul>{% else %}<p>Noch keine CSV-Dateien vorhanden.</p>{% endif %}</section>
+</main></body></html>
