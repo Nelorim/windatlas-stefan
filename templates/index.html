@@ -1,1 +1,141 @@
-<!doctype html><html><head><title>WindAtlas Stefan 5.0</title><link rel="stylesheet" href="/static/style.css"></head><body><header><h1>WindAtlas Stefan 5.0 Cloud</h1><div class="nav"><a href="/">Dashboard</a><a href="/upload">CSV-Realdaten hochladen</a></div></header><div class="container"><div class="card"><h2>Gesamtübersicht nach Disziplin</h2><table><tr><th>Spot</th><th>Datenquelle</th><th>Daten-Tage</th><th>Foil ≥8</th><th>Foil sehr gut ≥15</th><th>Twintip ≥12</th><th>Twintip optimal ≥16</th><th>Starkwind ≥24</th></tr>{% for r in rows %}<tr><td><a href="/spot/{{r.spot}}">{{r.spot}}</a></td><td>{{r.source}}</td><td>{{r.days}}</td><td>{{r.foil}}</td><td>{{r.foil_very}}</td><td>{{r.tt}}</td><td>{{r.tt_opt}}</td><td>{{r.strong}}</td></tr>{% endfor %}</table></div><div class="card legend"><h2>Farbcode</h2><span class="nowind"></span> Nicht kitebar <span class="foil"></span> Foil <span class="foilvery"></span> Foil sehr gut <span class="tt"></span> Twintip <span class="ttopt"></span> Twintip optimal <span class="strong"></span> Starkwind <span class="nodata"></span> Keine Daten</div><div class="card warn"><b>Qualitätslogik:</b> Silvaplana, Malcesine und Colico werden nicht mehr mit Open-Meteo als Hauptdatenbasis bewertet. Dort werden echte Messdaten verlangt.</div></div></body></html>
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071a20">
+  <meta name="description" content="WindAtlas CH vergleicht echte MeteoSchweiz-Messungen mit Open-Meteo-Modellen.">
+  <title>WindAtlas CH</title>
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Zum Inhalt</a>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="WindAtlas Startseite">
+      <span class="brand-mark" aria-hidden="true">W</span>
+      <span>WindAtlas <b>CH</b></span>
+    </a>
+    <div class="top-status"><span class="pulse"></span> Messung + Modell</div>
+  </header>
+
+  <main id="main">
+    <section class="hero shell">
+      <div>
+        <p class="eyebrow">VERIFIZIERBARE WINDDATEN</p>
+        <h1>Wissen, was wirklich<br><em>am Spot ankommt.</em></h1>
+        <p class="hero-copy">Echte MeteoSchweiz-Messungen treffen auf Open-Meteo-Prognosen – sauber getrennt, mit Zeitstempel, Distanz und Qualitätswert.</p>
+      </div>
+      <aside class="truth-card">
+        <span class="truth-icon">✓</span>
+        <div><b>Keine Scheingenauigkeit</b><small>„Aktuell“ bei Open‑Meteo ist ein Modellwert. Wir kennzeichnen ihn auch so.</small></div>
+      </aside>
+    </section>
+
+    <nav class="spot-nav shell" aria-label="Spot auswählen">
+      <div class="spot-scroll" id="spot-list">
+        {% for spot in spots %}
+        <button class="spot-chip{% if loop.first %} active{% endif %}" data-spot="{{ spot.id }}" aria-pressed="{{ 'true' if loop.first else 'false' }}">
+          <span>{{ spot.name }}</span><small>{{ spot.region }}</small>
+        </button>
+        {% endfor %}
+      </div>
+    </nav>
+
+    <section class="dashboard shell" aria-live="polite" aria-busy="true" id="dashboard">
+      <div class="loading-card" id="loading">
+        <span class="loader"></span><span>Datenquellen werden verglichen …</span>
+      </div>
+
+      <div id="content" hidden>
+        <div class="section-head">
+          <div><p class="eyebrow">AKTUELLE LAGE</p><h2 id="spot-title">–</h2></div>
+          <div class="freshness" id="freshness">–</div>
+        </div>
+
+        <div class="metric-grid">
+          <article class="wind-card panel">
+            <div class="signal" id="signal"><span></span><b>–</b></div>
+            <div class="wind-main"><strong id="wind-value">–</strong><span>kn</span></div>
+            <div class="wind-direction"><span class="arrow" id="wind-arrow">↑</span><b id="wind-direction">–</b><small id="wind-source">–</small></div>
+            <div class="mini-metrics">
+              <div><span>Böen</span><b id="gust-value">–</b></div>
+              <div><span>Temperatur</span><b id="temp-value">–</b></div>
+              <div><span>Messdistanz</span><b id="distance-value">–</b></div>
+            </div>
+            <p class="signal-reason" id="signal-reason"></p>
+          </article>
+
+          <article class="quality-card panel">
+            <div class="panel-title"><span>Datenqualität</span><b id="quality-label">–</b></div>
+            <div class="quality-score"><strong id="quality-score">–</strong><span>/100</span></div>
+            <div class="quality-track"><span id="quality-bar"></span></div>
+            <ul id="quality-reasons"></ul>
+            <p class="delta" id="model-delta">–</p>
+          </article>
+        </div>
+
+        <article class="forecast panel">
+          <div class="panel-title"><span>Nächste Stunden</span><b>Open‑Meteo Modell</b></div>
+          <div class="chart" id="forecast-chart" role="img" aria-label="Windprognose der nächsten Stunden"></div>
+        </article>
+
+        <div class="source-grid">
+          <article class="source panel" id="station-card">
+            <div class="source-badge measurement">MESSUNG</div>
+            <h3>MeteoSchweiz</h3>
+            <p id="station-description">Offizielle 10‑Minuten-Stationsmessung</p>
+            <dl>
+              <div><dt>Station</dt><dd id="station-name">–</dd></div>
+              <div><dt>Zeitpunkt</dt><dd id="station-time">–</dd></div>
+              <div><dt>Status</dt><dd id="station-status">–</dd></div>
+            </dl>
+            <a id="station-link" target="_blank" rel="noopener">Quelldatei öffnen ↗</a>
+          </article>
+
+          <article class="source panel" id="model-card">
+            <div class="source-badge model">MODELL</div>
+            <h3>Open‑Meteo</h3>
+            <p>Hochauflösender Modellwert am Spot; keine direkte Messung.</p>
+            <dl>
+              <div><dt>Modellwind</dt><dd id="model-wind">–</dd></div>
+              <div><dt>Zeitpunkt</dt><dd id="model-time">–</dd></div>
+              <div><dt>Status</dt><dd id="model-status">–</dd></div>
+            </dl>
+            <a id="model-link" target="_blank" rel="noopener">API-Antwort öffnen ↗</a>
+          </article>
+
+          <article class="source panel local" id="local-card">
+            <div class="source-badge local-badge">VOR ORT</div>
+            <h3 id="school-name">Lokale Quelle</h3>
+            <p id="school-kind">Für diesen Spot ist noch keine lokale Partnerschaft hinterlegt.</p>
+            <dl>
+              <div><dt>Website geprüft</dt><dd id="school-verified">–</dd></div>
+              <div><dt>Einordnung</dt><dd>Redaktionelle Quelle</dd></div>
+            </dl>
+            <a id="school-link" target="_blank" rel="noopener">Website öffnen ↗</a>
+          </article>
+        </div>
+
+        <aside class="note panel">
+          <span>Lokaler Kontext</span><p id="local-note">–</p>
+        </aside>
+        <p class="disclaimer" id="disclaimer"></p>
+      </div>
+
+      <div class="error-card" id="error" hidden>
+        <b>Daten gerade nicht erreichbar</b>
+        <p>Die Oberfläche bleibt verfügbar. Bitte in einem Moment erneut versuchen.</p>
+        <button id="retry">Erneut laden</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="shell">
+    <span>WindAtlas CH · Quellen transparent statt Zahlennebel.</span>
+    <a href="/healthz">Systemstatus</a>
+  </footer>
+</body>
+</html>
+
