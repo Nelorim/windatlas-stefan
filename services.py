@@ -195,7 +195,14 @@ def _first(row: dict[str, str], *names: str) -> str | None:
 
 
 def get_meteoswiss(spot: dict[str, Any]) -> dict[str, Any]:
-    station = spot["station"]
+    station = spot.get("station")
+    if not station:
+        return {
+            "available": False,
+            "provider": "Keine eingebundene Stationsmessung",
+            "cache_status": "not_configured",
+            "fetched_at": _iso_now(),
+        }
     station_id = station["id"].lower()
     url = METEOSWISS_FILE.format(station=station_id)
     key = f"meteoswiss:{station_id}"

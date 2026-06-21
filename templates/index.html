@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#071a20">
-  <meta name="description" content="WindAtlas CH vergleicht echte MeteoSchweiz-Messungen mit Open-Meteo-Modellen.">
+  <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
@@ -25,7 +25,7 @@
       <div>
         <p class="eyebrow">VERIFIZIERBARE WINDDATEN</p>
         <h1>Wissen, was wirklich<br><em>am Spot ankommt.</em></h1>
-        <p class="hero-copy">Echte MeteoSchweiz-Messungen treffen auf Open-Meteo-Prognosen – sauber getrennt, mit Zeitstempel, Distanz und Qualitätswert.</p>
+        <p class="hero-copy">Stationsmessungen und lokale Windquellen treffen auf Open-Meteo-Prognosen – sauber getrennt, mit Zeitstempel, Distanz und Qualitätswert.</p>
       </div>
       <aside class="truth-card">
         <span class="truth-icon">✓</span>
@@ -84,10 +84,10 @@
         <div class="source-grid">
           <article class="source panel" id="station-card">
             <div class="source-badge measurement">MESSUNG</div>
-            <h3>MeteoSchweiz</h3>
+            <h3 id="station-provider">MeteoSchweiz</h3>
             <p id="station-description">Offizielle 10‑Minuten-Stationsmessung</p>
             <dl>
-              <div><dt>Station</dt><dd id="station-name">–</dd></div>
+              <div><dt id="station-label">Station</dt><dd id="station-name">–</dd></div>
               <div><dt>Zeitpunkt</dt><dd id="station-time">–</dd></div>
               <div><dt>Status</dt><dd id="station-status">–</dd></div>
             </dl>
@@ -138,4 +138,3 @@
   </footer>
 </body>
 </html>
-

@@ -32,6 +32,14 @@ class AppTests(unittest.TestCase):
         response = self.client.get("/api/v1/wind/atlantis")
         self.assertEqual(response.status_code, 404)
 
+    def test_requested_international_spots_are_configured(self):
+        expected = {
+            "silvaplana", "viana", "malcesine", "colico", "loissin",
+            "jambiani", "berlingen", "sulawesi", "softades", "kb-zone",
+            "selena-bay",
+        }
+        self.assertEqual(set(SPOTS), expected)
+
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):
         build_payload.return_value = {"spot": {"id": "silvaplana"}}
@@ -67,4 +75,3 @@ class QualityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

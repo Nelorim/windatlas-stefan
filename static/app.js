@@ -30,11 +30,35 @@ function renderChart(forecast = []) {
 
 function renderSource(data) {
   const station = data.station;
-  $('#station-card').classList.toggle('unavailable', !station.available);
-  text('#station-name', station.available ? `${station.station_name} (${station.distance_km} km)` : 'Nicht verfügbar');
-  text('#station-time', station.available ? dateTime(station.observed_at) : '–');
-  text('#station-status', cacheLabel(station));
-  $('#station-link').href = station.source_url || 'https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations';
+  const kwind = data.spot.kwind;
+  $('#station-card').classList.toggle('unavailable', !station.available && !kwind);
+  if (station.available) {
+    text('#station-provider', 'MeteoSchweiz');
+    text('#station-description', 'Offizielle 10‑Minuten-Stationsmessung');
+    text('#station-label', 'Station');
+    text('#station-name', `${station.station_name} (${station.distance_km} km)`);
+    text('#station-time', dateTime(station.observed_at));
+    text('#station-status', cacheLabel(station));
+    $('#station-link').href = station.source_url;
+    $('#station-link').textContent = 'Quelldatei öffnen ↗';
+  } else if (kwind) {
+    text('#station-provider', kwind.name);
+    text('#station-description', 'Zusätzliches globales Live-Stationsnetz. Werte werden aus Lizenzgründen direkt bei KWind geprüft.');
+    text('#station-label', 'Suche');
+    text('#station-name', data.spot.name);
+    text('#station-time', 'Live extern');
+    text('#station-status', 'Verknüpft');
+    $('#station-link').href = kwind.url;
+    $('#station-link').textContent = 'KWind-Station suchen ↗';
+  } else {
+    text('#station-provider', 'Lokale Messung');
+    text('#station-description', 'Noch keine Stationsquelle hinterlegt.');
+    text('#station-name', 'Nicht verfügbar');
+    text('#station-time', '–');
+    text('#station-status', 'Offen');
+    $('#station-link').href = '#';
+    $('#station-link').textContent = 'Quelle vorschlagen';
+  }
 
   const model = data.model;
   $('#model-card').classList.toggle('unavailable', !model.available);

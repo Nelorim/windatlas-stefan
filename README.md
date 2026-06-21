@@ -1,6 +1,6 @@
 # WindAtlas CH — stabile Neuarchitektur
 
-Eine schnelle, mobile Windübersicht für Schweizer Kite- und Foilspots. Die App trennt echte Messungen konsequent von Modellwerten und bleibt auch dann bedienbar, wenn eine Wetterquelle ausfällt.
+Eine schnelle, mobile Windübersicht für ausgewählte Kite- und Foilspots in Europa, Afrika und Asien. Die App trennt echte Messungen konsequent von Modellwerten und bleibt auch dann bedienbar, wenn eine Wetterquelle ausfällt.
 
 ## Was diese Version stabil macht
 
@@ -18,9 +18,12 @@ Eine schnelle, mobile Windübersicht für Schweizer Kite- und Foilspots. Die App
 |---|---|---|
 | MeteoSchweiz SwissMetNet | echte automatische Stationsmessung | 10 Minuten |
 | Open-Meteo | Wettermodell am Spot, keine Messung | typischerweise 1–6 Stunden je Modell |
+| KWind | externes Live-Stationsnetz; Suche wird direkt geöffnet | abhängig von lokaler Station |
 | Kiteschulen / Clubs | öffentlich geprüfter lokaler Kontext | redaktionelles Prüfdatum |
 
 Der Qualitätswert berücksichtigt Quellenverfügbarkeit, Stationsdistanz und Abweichung zwischen Messung und Modell. Er ist transparent und bewusst konservativ. Die Kite-Ampel ist nur eine Entscheidungshilfe, niemals eine Sicherheitsfreigabe.
+
+KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 
 Offizielle Dokumentation:
 
