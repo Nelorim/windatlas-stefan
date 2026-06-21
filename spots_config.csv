@@ -1,10 +1,10 @@
 spot,country,latitude,longitude,timezone,source_mode,primary_reference,reference_url,quality_note
 Berlingen,Switzerland,47.6720,9.0200,Europe/Zurich,model_plus_csv,Berlingen Bodensee,https://open-meteo.com/,Open-Meteo baseline; lokale Bodensee-Messdaten bevorzugt importieren.
 Silvaplana,Switzerland,46.4590,9.7940,Europe/Zurich,csv_required,Lake Silvaplana real station,https://www.windfinder.com/windstatistics/lake_silvaplana,Für Silvaplana sind echte Messdaten zwingend; Open-Meteo wird nur als Vergleich angezeigt.
-Loissin,Germany,54.1120,13.5300,Europe/Berlin,model_plus_csv,Loissin Greifswalder Bodden,https://open-meteo.com/,Küsten-/Boddenwind: Open-Meteo als Basis verwendbar, lokale Daten besser.
+Loissin,Germany,54.1120,13.5300,Europe/Berlin,model_plus_csv,Loissin Greifswalder Bodden,https://open-meteo.com/,"Küsten-/Boddenwind: Open-Meteo als Basis verwendbar, lokale Daten besser."
 Malcesine,Italy,45.7640,10.8080,Europe/Rome,csv_required,Malcesine/Navene real station,https://www.windfinder.com/,Thermik Ora/Peler: echte Messdaten zwingend; Open-Meteo nur Vergleich.
 Colico,Italy,46.1370,9.3770,Europe/Rome,csv_required,Colico/Gera Lario real station,https://www.windfinder.com/,Thermik Breva: echte Messdaten zwingend; Open-Meteo nur Vergleich.
-Jambiani,Tanzania,-6.3210,39.5460,Africa/Dar_es_Salaam,model_plus_csv,Jambiani Zanzibar coast,https://open-meteo.com/,Passatküste: Open-Meteo als Basis, lokale Station bevorzugt.
-Jeneponto,Indonesia,-5.6700,119.7400,Asia/Makassar,model_plus_csv,Mallasoro Jeneponto,https://open-meteo.com/,Windregion südlich Makassar; Open-Meteo als Basis, lokale Station bevorzugt.
-Viana do Castelo,Portugal,41.6930,-8.8490,Europe/Lisbon,model_plus_csv,Viana do Castelo Praia Norte,https://open-meteo.com/,Atlantikküste: Open-Meteo als Basis, lokale Station bevorzugt.
-Softades Cyprus,Cyprus,34.8200,33.6100,Asia/Nicosia,model_plus_csv,Softades/Kiti Beach Cyprus,https://open-meteo.com/,Zypern-Kitespot; Open-Meteo als Basis, lokale Station bevorzugt.
+Jambiani,Tanzania,-6.3210,39.5460,Africa/Dar_es_Salaam,model_plus_csv,Jambiani Zanzibar coast,https://open-meteo.com/,"Passatküste: Open-Meteo als Basis, lokale Station bevorzugt."
+Jeneponto,Indonesia,-5.6700,119.7400,Asia/Makassar,model_plus_csv,Mallasoro Jeneponto,https://open-meteo.com/,"Windregion südlich Makassar; Open-Meteo als Basis, lokale Station bevorzugt."
+Viana do Castelo,Portugal,41.6930,-8.8490,Europe/Lisbon,model_plus_csv,Viana do Castelo Praia Norte,https://open-meteo.com/,"Atlantikküste: Open-Meteo als Basis, lokale Station bevorzugt."
+Softades Cyprus,Cyprus,34.8200,33.6100,Asia/Nicosia,model_plus_csv,Softades/Kiti Beach Cyprus,https://open-meteo.com/,"Zypern-Kitespot; Open-Meteo als Basis, lokale Station bevorzugt."
