@@ -1,6 +1,13 @@
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
-const state = { spot: document.querySelector('.spot-chip')?.dataset.spot || 'silvaplana', controller: null };
+const state = {
+  spot: document.querySelector('.spot-chip')?.dataset.spot || 'silvaplana',
+  controller: null,
+  historyController: null,
+  historyData: null,
+  historyView: 'month',
+  historyDate: new Date(),
+};
 
 function text(selector, value) { $(selector).textContent = value ?? '–'; }
 function value(value, suffix = '') { return Number.isFinite(value) ? `${value}${suffix}` : '–'; }
@@ -14,6 +21,11 @@ function cacheLabel(source) {
   return source.cache_status === 'stale' ? 'Letzter gültiger Wert' : 'Aktuell';
 }
 function preferred(data) { return data.station.available && Number.isFinite(data.station.wind_kn) ? data.station : data.model; }
+function compass(degrees) {
+  if (!Number.isFinite(degrees)) return '–';
+  const names = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  return names[Math.round(degrees / 22.5) % 16];
+}
 
 function renderChart(forecast = []) {
   const chart = $('#forecast-chart');
@@ -24,8 +36,109 @@ function renderChart(forecast = []) {
     const wind = item.wind_kn || 0;
     const height = Math.max(4, Math.round((wind / max) * 112));
     const hour = new Date(item.time).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
-    return `<div class="chart-hour"><div class="chart-bar-wrap"><span class="chart-bar" data-value="${wind}" style="height:${height}px"></span></div><b>${hour}</b><small>${item.gust_kn ?? '–'} Böe</small></div>`;
+    const direction = Number.isFinite(item.direction_deg) ? `${compass(item.direction_deg)} ${Math.round(item.direction_deg)}°` : 'Richtung –';
+    return `<div class="chart-hour"><div class="chart-bar-wrap"><span class="chart-bar" data-value="${wind}" style="height:${height}px"></span></div><b>${hour}</b><small>${direction}<br>${item.gust_kn ?? '–'} Böe</small></div>`;
   }).join('') || '<p>Keine Prognose verfügbar.</p>';
+}
+
+function historyDirection(records) {
+  const counts = {};
+  records.forEach(item => { if (item.direction) counts[item.direction] = (counts[item.direction] || 0) + 1; });
+  return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || '–';
+}
+function average(records, key) {
+  const values = records.map(item => item[key]).filter(Number.isFinite);
+  return values.length ? Math.round(values.reduce((sum, item) => sum + item, 0) / values.length * 10) / 10 : null;
+}
+function maximum(records, key) {
+  const values = records.map(item => item[key]).filter(Number.isFinite);
+  return values.length ? Math.max(...values) : null;
+}
+function localDate(raw) { return new Date(`${raw}T12:00:00`); }
+function sameMonth(item, anchor) {
+  const day = localDate(item.date);
+  return day.getFullYear() === anchor.getFullYear() && day.getMonth() === anchor.getMonth();
+}
+function statCard(label, records) {
+  return `<div class="history-stat"><b>${label}</b><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><span>Ø Tagesmaximum</span><small>Spitze ${value(maximum(records, 'wind_kn'), ' kn')} · meist ${historyDirection(records)}</small></div>`;
+}
+function renderHistoryMonth(records, anchor) {
+  const monthRecords = records.filter(item => sameMonth(item, anchor));
+  const byDate = Object.fromEntries(monthRecords.map(item => [item.date, item]));
+  const year = anchor.getFullYear();
+  const month = anchor.getMonth();
+  const first = new Date(year, month, 1);
+  const days = new Date(year, month + 1, 0).getDate();
+  const offset = (first.getDay() + 6) % 7;
+  const cells = Array.from({ length: offset }, () => '<div class="history-day empty"></div>');
+  for (let day = 1; day <= days; day += 1) {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const item = byDate[key];
+    cells.push(`<div class="history-day${item ? '' : ' missing'}"><b>${day}</b><strong>${item ? value(item.wind_kn, ' kn') : '–'}</strong><span>${item?.direction ? `${item.direction} · ${Math.round(item.direction_deg)}°` : 'keine Daten'}</span><small>${item ? `Böe ${value(item.gust_kn, ' kn')}` : ''}</small></div>`);
+  }
+  return `${statCard('Monat', monthRecords)}<div class="calendar-weekdays"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div><div class="history-calendar">${cells.join('')}</div>`;
+}
+function renderHistoryWeek(records) {
+  const today = new Date(); today.setHours(23, 59, 59, 999);
+  const start = new Date(today); start.setDate(today.getDate() - 6); start.setHours(0, 0, 0, 0);
+  const week = records.filter(item => { const day = localDate(item.date); return day >= start && day <= today; });
+  return `${statCard('Letzte 7 Tage', week)}<div class="history-days">${week.map(item => `<div class="history-day"><b>${localDate(item.date).toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit' })}</b><strong>${value(item.wind_kn, ' kn')}</strong><span>${item.direction || '–'} · ${Number.isFinite(item.direction_deg) ? `${Math.round(item.direction_deg)}°` : '–'}</span><small>Böe ${value(item.gust_kn, ' kn')}</small></div>`).join('')}</div>`;
+}
+function renderHistoryYear(records, anchor) {
+  const year = anchor.getFullYear();
+  const cards = Array.from({ length: 12 }, (_, month) => {
+    const subset = records.filter(item => { const day = localDate(item.date); return day.getFullYear() === year && day.getMonth() === month; });
+    return statCard(new Intl.DateTimeFormat('de-CH', { month: 'short' }).format(new Date(year, month, 1)), subset);
+  });
+  return `<div class="history-summary-grid">${cards.join('')}</div>`;
+}
+function renderHistoryFive(records) {
+  const current = new Date().getFullYear();
+  const cards = [];
+  for (let year = current - 4; year <= current; year += 1) {
+    cards.push(statCard(String(year), records.filter(item => localDate(item.date).getFullYear() === year)));
+  }
+  return `<div class="history-summary-grid five">${cards.join('')}</div>`;
+}
+function renderHistory() {
+  if (!state.historyData?.records) return;
+  const records = state.historyData.records;
+  const content = $('#history-content');
+  const view = state.historyView;
+  const anchor = state.historyDate;
+  $('#history-nav').hidden = view === 'five' || view === 'week';
+  $('#history-period').textContent = view === 'month'
+    ? new Intl.DateTimeFormat('de-CH', { month: 'long', year: 'numeric' }).format(anchor)
+    : String(anchor.getFullYear());
+  content.innerHTML = view === 'week' ? renderHistoryWeek(records)
+    : view === 'month' ? renderHistoryMonth(records, anchor)
+    : view === 'year' ? renderHistoryYear(records, anchor)
+    : renderHistoryFive(records);
+  content.hidden = false;
+}
+async function loadHistory(spot) {
+  state.historyController?.abort();
+  state.historyController = new AbortController();
+  state.historyData = null;
+  state.historyDate = new Date();
+  $('#history-loading').hidden = false;
+  $('#history-content').hidden = true;
+  $('#history-error').hidden = true;
+  const timeout = setTimeout(() => state.historyController.abort(), 16000);
+  try {
+    const response = await fetch(`/api/v1/history/${encodeURIComponent(spot)}`, { signal: state.historyController.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data.available) throw new Error('history unavailable');
+    state.historyData = data;
+    $('#history-source').href = data.source_url;
+    renderHistory();
+  } catch (_) {
+    $('#history-error').hidden = false;
+  } finally {
+    clearTimeout(timeout);
+    $('#history-loading').hidden = true;
+  }
 }
 
 function renderSource(data) {
@@ -86,7 +199,7 @@ function render(data) {
   text('#gust-value', value(live.gust_kn, ' kn'));
   text('#temp-value', value(live.temperature_c, ' °C'));
   text('#distance-value', data.station.available ? value(data.station.distance_km, ' km') : '–');
-  text('#wind-direction', live.direction || '–');
+  text('#wind-direction', Number.isFinite(live.direction_deg) ? `${live.direction || compass(live.direction_deg)} · ${Math.round(live.direction_deg)}°` : '–');
   text('#wind-source', sourceName);
   $('#wind-arrow').style.transform = `rotate(${live.direction_deg ?? 0}deg)`;
 
@@ -103,7 +216,12 @@ function render(data) {
 
   renderChart(data.model.forecast);
   renderSource(data);
-  text('#local-note', data.spot.local_note);
+  const guide = data.spot.spotguide;
+  text('#local-note', [data.spot.local_note, guide?.wind_info].filter(Boolean).join(' '));
+  const guideLink = $('#spotguide-link');
+  guideLink.hidden = !guide;
+  guideLink.href = guide?.url || '#';
+  guideLink.textContent = guide ? `${guide.name} öffnen ↗` : '';
   text('#disclaimer', data.disclaimer);
 }
 
@@ -121,6 +239,7 @@ async function load(spot = state.spot) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     render(data);
+    loadHistory(spot);
     try { localStorage.setItem(`windatlas:${spot}`, JSON.stringify({ at: Date.now(), data })); } catch (_) {}
     $('#content').hidden = false;
   } catch (error) {
@@ -148,6 +267,22 @@ $$('.spot-chip').forEach(button => button.addEventListener('click', () => {
   load(button.dataset.spot);
 }));
 $('#retry').addEventListener('click', () => load());
+$$('[data-history-view]').forEach(button => button.addEventListener('click', () => {
+  state.historyView = button.dataset.historyView;
+  $$('[data-history-view]').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', String(item === button)); });
+  renderHistory();
+}));
+$('#history-prev').addEventListener('click', () => {
+  const step = state.historyView === 'month' ? -1 : -12;
+  state.historyDate = new Date(state.historyDate.getFullYear(), state.historyDate.getMonth() + step, 1);
+  renderHistory();
+});
+$('#history-next').addEventListener('click', () => {
+  const step = state.historyView === 'month' ? 1 : 12;
+  const candidate = new Date(state.historyDate.getFullYear(), state.historyDate.getMonth() + step, 1);
+  if (candidate <= new Date()) state.historyDate = candidate;
+  renderHistory();
+});
 
 const requested = location.hash.slice(1);
 const target = requested && document.querySelector(`[data-spot="${CSS.escape(requested)}"]`);

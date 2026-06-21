@@ -13,10 +13,11 @@ import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 METEOSWISS_FILE = (
     "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/"
     "{station}/ogd-smn_{station}_t_now.csv"
@@ -178,6 +179,75 @@ def get_open_meteo(spot: dict[str, Any]) -> dict[str, Any]:
         }
 
     return _cached_fetch(key, ttl=300, stale_for=21_600, loader=load)
+
+
+def _daily_history(raw: dict[str, Any]) -> list[dict[str, Any]]:
+    daily = raw.get("daily") or {}
+    times = daily.get("time") or []
+    winds = daily.get("wind_speed_10m_max") or []
+    gusts = daily.get("wind_gusts_10m_max") or []
+    directions = daily.get("wind_direction_10m_dominant") or []
+    records = []
+    for index, stamp in enumerate(times):
+        direction = _number(directions[index]) if index < len(directions) else None
+        records.append(
+            {
+                "date": stamp,
+                "wind_kn": _number(winds[index]) if index < len(winds) else None,
+                "gust_kn": _number(gusts[index]) if index < len(gusts) else None,
+                "direction_deg": direction,
+                "direction": direction_name(direction),
+            }
+        )
+    return records
+
+
+def get_history(spot: dict[str, Any]) -> dict[str, Any]:
+    """Five calendar years of daily model/reanalysis data, loaded independently."""
+    today = date.today()
+    start = date(today.year - 4, 1, 1)
+    archive_end = today - timedelta(days=3)
+    daily_variables = ",".join(
+        ["wind_speed_10m_max", "wind_gusts_10m_max", "wind_direction_10m_dominant"]
+    )
+    common = {
+        "latitude": spot["lat"],
+        "longitude": spot["lon"],
+        "daily": daily_variables,
+        "timezone": "auto",
+        "wind_speed_unit": "kn",
+    }
+    archive_url = f"{OPEN_METEO_ARCHIVE_URL}?{urllib.parse.urlencode({**common, 'start_date': start.isoformat(), 'end_date': archive_end.isoformat()})}"
+    recent_url = f"{OPEN_METEO_URL}?{urllib.parse.urlencode({**common, 'past_days': 7, 'forecast_days': 1})}"
+    key = f"history:{spot['lat']}:{spot['lon']}:{today.isoformat()}"
+
+    def load() -> dict[str, Any]:
+        pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="history-source")
+        archive_future = pool.submit(_fetch_json, archive_url, 12.0)
+        recent_future = pool.submit(_fetch_json, recent_url, 8.0)
+        done, _ = wait([archive_future, recent_future], timeout=13.0)
+        if archive_future not in done:
+            pool.shutdown(wait=False, cancel_futures=True)
+            raise TimeoutError("historical archive timeout")
+        records = {item["date"]: item for item in _daily_history(archive_future.result())}
+        if recent_future in done:
+            for item in _daily_history(recent_future.result()):
+                records[item["date"]] = item
+        pool.shutdown(wait=False, cancel_futures=True)
+        ordered = [records[key] for key in sorted(records) if start.isoformat() <= key <= today.isoformat()]
+        return {
+            "available": True,
+            "type": "reanalysis",
+            "provider": "Open-Meteo Historical Weather",
+            "source_url": archive_url,
+            "method": "Tägliche Reanalyse/Modellrekonstruktion, keine lückenlose Stationsmessung",
+            "start_date": start.isoformat(),
+            "end_date": today.isoformat(),
+            "fetched_at": _iso_now(),
+            "records": ordered,
+        }
+
+    return _cached_fetch(key, ttl=21_600, stale_for=604_800, loader=load)
 
 
 def _csv_rows(text: str) -> list[dict[str, str]]:

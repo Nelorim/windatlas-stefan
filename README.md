@@ -23,12 +23,19 @@ Eine schnelle, mobile Windübersicht für ausgewählte Kite- und Foilspots in Eu
 
 Der Qualitätswert berücksichtigt Quellenverfügbarkeit, Stationsdistanz und Abweichung zwischen Messung und Modell. Er ist transparent und bewusst konservativ. Die Kite-Ampel ist nur eine Entscheidungshilfe, niemals eine Sicherheitsfreigabe.
 
+## Windhistorie
+
+Für jeden konfigurierten Spot stehen vier Ansichten bereit: **Woche**, **Monat**, **Jahr** und **5 Jahre**. Die Monatsansicht zeigt jeden Kalendertag mit Tagesmaximum, Böenspitze und – sofern vorhanden – dominanter Windrichtung. Jahres- und Fünfjahresansicht verdichten dieselben Tageswerte zu übersichtlichen Vergleichen.
+
+Die Historie stammt aus der Open-Meteo Historical Weather API. Es handelt sich um Reanalyse- beziehungsweise Modellwerte am Spot, nicht um eine lückenlose Historie lokaler Messstationen. Das wird in der Oberfläche ausdrücklich gekennzeichnet. Historische Antworten werden sechs Stunden gecacht; bei einer kurzfristigen Störung kann der letzte gültige Stand bis zu sieben Tage weiter angezeigt werden.
+
 KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 
 Offizielle Dokumentation:
 
 - [MeteoSchweiz automatische Wetterstationen](https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations)
 - [Open-Meteo API-Dokumentation](https://open-meteo.com/en/docs)
+- [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)
 
 ## Lokal starten
 

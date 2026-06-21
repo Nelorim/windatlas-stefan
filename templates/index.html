@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-  <script defer src="{{ url_for('static', filename='app.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='8.0') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='8.0') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -81,6 +81,30 @@
           <div class="chart" id="forecast-chart" role="img" aria-label="Windprognose der nächsten Stunden"></div>
         </article>
 
+        <article class="history panel">
+          <div class="history-head">
+            <div>
+              <div class="panel-title"><span>Windhistorie</span><b>OPEN‑METEO REANALYSE</b></div>
+              <p>Tagesmaximum und dominante Windrichtung · fünf Kalenderjahre</p>
+            </div>
+            <a id="history-source" href="https://open-meteo.com/en/docs/historical-weather-api" target="_blank" rel="noopener">Methode ↗</a>
+          </div>
+          <div class="history-tabs" role="tablist" aria-label="Historischer Zeitraum">
+            <button data-history-view="week" role="tab">Woche</button>
+            <button data-history-view="month" role="tab" class="active" aria-selected="true">Monat</button>
+            <button data-history-view="year" role="tab">Jahr</button>
+            <button data-history-view="five" role="tab">5 Jahre</button>
+          </div>
+          <div class="history-nav" id="history-nav">
+            <button id="history-prev" aria-label="Vorheriger Zeitraum">←</button>
+            <strong id="history-period">–</strong>
+            <button id="history-next" aria-label="Nächster Zeitraum">→</button>
+          </div>
+          <div class="history-loading" id="history-loading"><span class="loader"></span> Historie wird separat geladen …</div>
+          <div class="history-content" id="history-content" hidden></div>
+          <div class="history-error" id="history-error" hidden>Historie derzeit nicht erreichbar. Live-Daten funktionieren unabhängig weiter.</div>
+        </article>
+
         <div class="source-grid">
           <article class="source panel" id="station-card">
             <div class="source-badge measurement">MESSUNG</div>
@@ -119,7 +143,9 @@
         </div>
 
         <aside class="note panel">
-          <span>Lokaler Kontext</span><p id="local-note">–</p>
+          <span>Lokaler Kontext</span>
+          <p id="local-note">–</p>
+          <a id="spotguide-link" target="_blank" rel="noopener" hidden>Unhooked Spotguide öffnen ↗</a>
         </aside>
         <p class="disclaimer" id="disclaimer"></p>
       </div>

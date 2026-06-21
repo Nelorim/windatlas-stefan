@@ -16,6 +16,11 @@ SPOTS = {
         "kwind": KWIND,
         "kite": {"min_kn": 9, "max_kn": 28, "directions": ["S", "SW", "WSW"]},
         "local_note": "Der thermische Malojawind ist lokal geprägt und wird vom Talmodell oft unterschätzt.",
+        "spotguide": {
+            "name": "Unhooked Spotguide",
+            "url": "https://www.unhooked.ch/2008/spotguide/silvaplana/",
+            "wind_info": "Lokaler Richtungscheck: Der Maloja benötigt eine südwestliche Grundströmung; Nordströmung/Julierwind kann die Thermik verhindern und sehr böig werden.",
+        },
         "school": {
             "name": "Swiss Kitesurf / Kitesailing",
             "url": "https://www.kitesailing.ch/spot/wetter-kitesurfen",
@@ -112,6 +117,11 @@ SPOTS = {
         "kwind": KWIND,
         "kite": {"min_kn": 10, "max_kn": 28, "directions": ["W", "NW", "NE", "E"]},
         "local_note": "Die MeteoSchweiz-Station liegt nicht direkt am Spot; KWind und die Sichtprüfung am See ergänzend nutzen.",
+        "spotguide": {
+            "name": "Unhooked Spotguide",
+            "url": "https://www.unhooked.ch/2008/spotguide/berlingen/",
+            "wind_info": "Lokaler Richtungscheck: SW–W wird durch den Düseneffekt verstärkt; SW ist häufig böig, West meist besser und Nordost/Bise konstanter.",
+        },
         "school": None,
     },
     "sulawesi": {

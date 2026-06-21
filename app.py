@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from flask import Flask, jsonify, render_template
 
 from config import SPOTS
-from services import build_payload
+from services import build_payload, get_history
 
 
 def create_app() -> Flask:
@@ -60,6 +60,13 @@ def create_app() -> Flask:
         if spot is None:
             return jsonify({"error": "Unbekannter Spot"}), 404
         return jsonify(build_payload(spot_id, spot))
+
+    @app.get("/api/v1/history/<spot_id>")
+    def history(spot_id: str):
+        spot = SPOTS.get(spot_id)
+        if spot is None:
+            return jsonify({"error": "Unbekannter Spot"}), 404
+        return jsonify({"spot": {"id": spot_id, "name": spot["name"]}, **get_history(spot)})
 
     @app.get("/healthz")
     def health():

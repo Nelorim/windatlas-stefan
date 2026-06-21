@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 from config import SPOTS
-from services import direction_name, kite_signal, quality_report
+from services import _daily_history, direction_name, kite_signal, quality_report
 
 
 class AppTests(unittest.TestCase):
@@ -40,6 +40,10 @@ class AppTests(unittest.TestCase):
         }
         self.assertEqual(set(SPOTS), expected)
 
+    def test_unhooked_guides_cover_swiss_spots(self):
+        self.assertIn("unhooked.ch", SPOTS["silvaplana"]["spotguide"]["url"])
+        self.assertIn("unhooked.ch", SPOTS["berlingen"]["spotguide"]["url"])
+
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):
         build_payload.return_value = {"spot": {"id": "silvaplana"}}
@@ -47,8 +51,26 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["spot"]["id"], "silvaplana")
 
+    @patch("app.get_history")
+    def test_history_endpoint(self, get_history):
+        get_history.return_value = {"available": True, "records": [{"date": "2026-06-20", "wind_kn": 12}]}
+        response = self.client.get("/api/v1/history/viana")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json["available"])
+        self.assertEqual(response.json["records"][0]["wind_kn"], 12)
+
 
 class QualityTests(unittest.TestCase):
+    def test_daily_history_includes_direction(self):
+        records = _daily_history({"daily": {
+            "time": ["2026-06-20"],
+            "wind_speed_10m_max": [14.2],
+            "wind_gusts_10m_max": [20.1],
+            "wind_direction_10m_dominant": [225],
+        }})
+        self.assertEqual(records[0]["direction"], "SW")
+        self.assertEqual(records[0]["wind_kn"], 14.2)
+
     def test_direction_compass(self):
         self.assertEqual(direction_name(0), "N")
         self.assertEqual(direction_name(225), "SW")
