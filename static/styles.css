@@ -98,8 +98,10 @@ h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.04em; }
 .windguru-note { margin: 14px 0 0; line-height: 1.5; }
 .external-live { margin-top: 16px; padding: 24px 26px; }
 .external-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 20px; }
-.external-sources a { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 13px; padding: 15px 16px; background: rgba(255,255,255,.025); color: var(--ink); text-decoration: none; }
-.external-sources a:hover { border-color: var(--mint); }
+.external-source { display: grid; border: 1px solid var(--line); border-radius: 13px; overflow: hidden; background: rgba(255,255,255,.025); }
+.external-source > a { display: grid; gap: 6px; padding: 15px 16px; color: var(--ink); text-decoration: none; }
+.external-source:hover { border-color: var(--mint); }
+.external-source iframe { display: block; width: 100%; min-height: 330px; border: 0; border-top: 1px solid var(--line); background: #fff; }
 .external-sources strong { font-size: 12px; }
 .external-sources span { color: var(--mint); font-size: 10px; }
 .external-sources small { color: var(--muted); font-size: 9px; line-height: 1.5; }

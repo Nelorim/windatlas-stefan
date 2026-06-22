@@ -33,13 +33,15 @@ Die Historie stammt aus der Open-Meteo Historical Weather API. Es handelt sich u
 
 KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 
-Für Silvaplana bleibt MeteoSchweiz Samedan die automatisch gelesene regionale Referenz. Die zusätzliche MeteoSchweiz-Anzeige der Station `SIA` ist direkt verknüpft. Wegen der Stationsdistanz kann die Hauptreferenz keine Datenqualität von 100/100 erzeugen.
+Für Silvaplana wird die frei verfügbare MeteoSchweiz-Station Segl-Maria (`SIA`) direkt aus der offiziellen 10-Minuten-CSV gelesen. Sie liegt rund 4,1 km vom Spot entfernt und ersetzt Samedan als Hauptreferenz. Windmittel, Böe, Richtung, Messzeit und Plausibilitätsstatus werden normalisiert; ein veralteter oder inkonsistenter Wert wird im Qualitätswert deutlich begrenzt.
 
 Mui Ne (Vietnam) ist als weiterer Spot enthalten. Die lokale Quelle ist die C2Sky-Webcamseite mit eingebundener Windguru-Livestation `14164`; Open-Meteo bleibt als klar gekennzeichneter Modellvergleich bestehen.
 
 Nur KB-Zone verwendet die feste, vom Nutzer zugeordnete KWind-Station `64f17bf1779ccbba6bfef479`. Selena Bay und alle anderen Spots verwenden KWind ausdrücklich nicht. Liveansicht und Messhistorie werden über das offizielle KWind-Widget beziehungsweise direkte KWind-Links geöffnet; WindAtlas speichert keine KWind-Rohdaten.
 
 Weitere konkret zugeordnete Messseiten sind WeatherLink Praia do Cabedelo für Viana do Castelo, Kitecampione als regionale Gardasee-Referenz für Malcesine und Windfinder Greifswald als 8,2 km entfernte Referenz für Loissin. Ein vorhandenes Windfinder-Premium-Abo wird nur in der persönlichen Browsersitzung genutzt; WindAtlas speichert weder Zugangsdaten noch Premium-Inhalte.
+
+Diese Ausgabe verwendet ausschließlich kostenlose Zugänge. WeatherLink und Kitecampione werden als öffentliche Messseiten eingebettet, sofern der Anbieter das Einbetten im Browser zulässt. Kostenpflichtige WeatherLink- und Windfinder-APIs werden nicht verwendet; Windfinder bleibt eine externe Referenzseite. Es findet kein HTML-Scraping und keine Weiterverteilung geschützter Rohdaten statt.
 
 Windguru Live Wind ist zusätzlich für Malcesine, Jambiani, Berlingen, KB-Zone, Selena Bay und Mui Ne verknüpft. Angezeigt werden nur redaktionell bestätigte Stationsnamen und Distanzen. Bei Colico und Silvaplana wurden nahe Bergstationen bewusst nicht als Spotmessung übernommen; für Viana, Loissin, Sulawesi und Softades fehlt derzeit eine ausreichend eindeutig bestätigte nahe Windguru-Messstation. Externe Windguru-Werte erhöhen den WindAtlas-Qualitätswert nicht automatisch.
 

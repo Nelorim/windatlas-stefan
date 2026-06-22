@@ -60,16 +60,9 @@ SPOTS = {
         "region": "Engadin · Schweiz",
         "lat": 46.459,
         "lon": 9.795,
-        "station": {"id": "SAM", "name": "Samedan", "distance_km": 10},
+        "station": {"id": "SIA", "name": "Segl-Maria", "distance_km": 4.1},
         "kwind": None,
-        "external_measurements": [
-            {
-                "name": "MeteoSchweiz Station SIA",
-                "url": "https://www.meteoschweiz.admin.ch/service-und-publikationen/applikationen/messwerte.html#param=messwerte-windgeschwindigkeit-kmh-10min&table=false&station=SIA",
-                "kind": "Offizielle 10-Minuten-Windmessung als zusätzliche Oberengadin-Referenz",
-                "note": "Quelle: MeteoSchweiz; Stationswert und Lage getrennt von Samedan beurteilen.",
-            },
-        ],
+        "external_measurements": [],
         "kite": {"min_kn": 9, "max_kn": 28, "directions": ["S", "SW", "WSW"]},
         "local_note": "Der thermische Malojawind ist lokal geprägt und wird vom Talmodell oft unterschätzt.",
         "spotguide": {
@@ -95,6 +88,7 @@ SPOTS = {
             {
                 "name": "WeatherLink Praia do Cabedelo",
                 "url": "https://www.weatherlink.com/embeddablePage/show/0722f5db3b314dd9a179ba37f6c4b772/fullscreen",
+                "embed_url": "https://www.weatherlink.com/embeddablePage/show/0722f5db3b314dd9a179ba37f6c4b772/fullscreen",
                 "kind": "Live-Wetterstation am Spot Viana do Castelo / Cabedelo",
                 "note": "Externe Davis-WeatherLink-Anzeige; Werte werden nicht serverseitig kopiert.",
             },
@@ -120,6 +114,7 @@ SPOTS = {
             {
                 "name": "Kitecampione Anemometer",
                 "url": "https://www.kitecampione.net/",
+                "embed_url": "https://www.kitecampione.net/",
                 "kind": "Live-Anemometer in Campione del Garda",
                 "note": "Regionale Gardasee-Referenz, keine direkte Messung in Malcesine.",
             },

@@ -216,6 +216,8 @@ function renderSource(data) {
   externalPanel.hidden = externalMeasurements.length === 0;
   externalSources.replaceChildren();
   externalMeasurements.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'external-source';
     const link = document.createElement('a');
     const name = document.createElement('strong');
     const kind = document.createElement('span');
@@ -228,7 +230,16 @@ function renderSource(data) {
     const distance = Number.isFinite(item.distance_km) ? `${item.distance_km} km entfernt · ` : '';
     meta.textContent = `${distance}${item.note || 'Extern öffnen'}`;
     link.append(name, kind, meta);
-    externalSources.append(link);
+    card.append(link);
+    if (item.embed_url) {
+      const frame = document.createElement('iframe');
+      frame.src = item.embed_url;
+      frame.title = `${item.name} Live-Messung`;
+      frame.loading = 'lazy';
+      frame.referrerPolicy = 'strict-origin-when-cross-origin';
+      card.append(frame);
+    }
+    externalSources.append(card);
   });
 
   const model = data.model;

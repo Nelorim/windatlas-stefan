@@ -264,6 +264,26 @@ def _first(row: dict[str, str], *names: str) -> str | None:
     return None
 
 
+def _observation_age_minutes(raw: str | None) -> float | None:
+    if not raw:
+        return None
+    parsed = None
+    for parser in (
+        lambda value: datetime.fromisoformat(value.replace("Z", "+00:00")),
+        lambda value: datetime.strptime(value, "%d.%m.%Y %H:%M"),
+    ):
+        try:
+            parsed = parser(raw)
+            break
+        except (TypeError, ValueError):
+            continue
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return round(max(0.0, (datetime.now(timezone.utc) - parsed.astimezone(timezone.utc)).total_seconds() / 60), 1)
+
+
 def get_meteoswiss(spot: dict[str, Any]) -> dict[str, Any]:
     station = spot.get("station")
     if not station:
@@ -282,6 +302,22 @@ def get_meteoswiss(spot: dict[str, Any]) -> dict[str, Any]:
         if not rows:
             raise ValueError("empty MeteoSwiss CSV")
         row = rows[-1]
+        observed_at = _first(row, "reference_timestamp", "timestamp", "time", "date")
+        wind = _kmh_to_kn(_number(_first(row, "fu3010z0")))
+        gust = _kmh_to_kn(_number(_first(row, "fu3010z1")))
+        direction = _number(_first(row, "dkl010z0"))
+        if wind is None:
+            raise ValueError("station wind value missing")
+        quality_flags = []
+        if gust is not None and gust < wind:
+            gust = None
+            quality_flags.append("gust_below_mean")
+        if direction is not None and not 0 <= direction <= 360:
+            direction = None
+            quality_flags.append("invalid_direction")
+        age_minutes = _observation_age_minutes(observed_at)
+        if age_minutes is not None and age_minutes > 30:
+            quality_flags.append("stale_observation")
         return {
             "available": True,
             "type": "measurement",
@@ -290,14 +326,14 @@ def get_meteoswiss(spot: dict[str, Any]) -> dict[str, Any]:
             "station_id": station["id"],
             "station_name": station["name"],
             "distance_km": station["distance_km"],
-            "observed_at": _first(
-                row, "reference_timestamp", "timestamp", "time", "date"
-            ),
+            "observed_at": observed_at,
+            "observation_age_minutes": age_minutes,
             "fetched_at": _iso_now(),
-            "wind_kn": _kmh_to_kn(_number(_first(row, "fu3010z0"))),
-            "gust_kn": _kmh_to_kn(_number(_first(row, "fu3010z1"))),
-            "direction_deg": _number(_first(row, "dkl010z0")),
+            "wind_kn": wind,
+            "gust_kn": gust,
+            "direction_deg": direction,
             "temperature_c": _number(_first(row, "tre200s0")),
+            "quality_flags": quality_flags,
             "method": "Offizielle 10-Minuten-Stationsmessung",
         }
 
@@ -318,7 +354,7 @@ def direction_name(degrees: float | None) -> str | None:
 def quality_report(model: dict[str, Any], station: dict[str, Any]) -> dict[str, Any]:
     # Agreement with a model is useful, but cannot turn a regional station into
     # an on-spot measurement. Distance therefore imposes a hard, honest ceiling.
-    score = 35 if model.get("available") else 0
+    score = 30 if model.get("available") else 0
     reasons: list[str] = []
     delta = None
     if station.get("available") and station.get("wind_kn") is not None:
@@ -343,6 +379,22 @@ def quality_report(model: dict[str, Any], station: dict[str, Any]) -> dict[str, 
         else:
             ceiling = 65
             reasons.append("Messstation ist weit entfernt")
+        age = station.get("observation_age_minutes")
+        if age is not None and age <= 20:
+            score += 10
+            reasons.append("Messung ist höchstens 20 Minuten alt")
+        elif age is not None and age <= 40:
+            score += 5
+            ceiling = min(ceiling, 90)
+            reasons.append("Messung ist leicht verzögert")
+        elif age is not None:
+            ceiling = min(ceiling, 70)
+            reasons.append("Messung ist älter als 40 Minuten")
+        else:
+            reasons.append("Messalter ist nicht eindeutig bestimmbar")
+        if station.get("quality_flags"):
+            ceiling = min(ceiling, 70)
+            reasons.append("Stationswert hat einen Plausibilitätswarnhinweis")
         if model.get("wind_kn") is not None:
             delta = round(abs(station["wind_kn"] - model["wind_kn"]), 1)
             if delta <= 3:

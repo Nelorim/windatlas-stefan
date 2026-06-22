@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 from config import SPOTS
-from services import _daily_history, direction_name, kite_signal, quality_report
+from services import _daily_history, _observation_age_minutes, direction_name, get_meteoswiss, kite_signal, quality_report
 
 
 class AppTests(unittest.TestCase):
@@ -85,7 +85,6 @@ class AppTests(unittest.TestCase):
 
     def test_requested_external_measurements_are_linked(self):
         expected_hosts = {
-            "silvaplana": "meteoschweiz.admin.ch",
             "viana": "weatherlink.com",
             "malcesine": "kitecampione.net",
             "loissin": "windfinder.com",
@@ -93,6 +92,24 @@ class AppTests(unittest.TestCase):
         for spot_id, host in expected_hosts.items():
             self.assertIn(host, SPOTS[spot_id]["external_measurements"][0]["url"])
         self.assertEqual(SPOTS["loissin"]["external_measurements"][0]["distance_km"], 8.2)
+
+    def test_silvaplana_uses_free_sia_live_data(self):
+        station = SPOTS["silvaplana"]["station"]
+        self.assertEqual(station["id"], "SIA")
+        self.assertEqual(station["name"], "Segl-Maria")
+        self.assertLess(station["distance_km"], 5)
+
+    @patch("services._fetch_text")
+    def test_free_sia_csv_is_normalized(self, fetch_text):
+        fetch_text.return_value = (
+            "station_abbr;reference_timestamp;tre200s0;dkl010z0;fu3010z0;fu3010z1\n"
+            "SIA;22.06.2026 12:30;23;239;16.6;27.4\n"
+        )
+        source = get_meteoswiss(SPOTS["silvaplana"])
+        self.assertTrue(source["available"])
+        self.assertEqual(source["wind_kn"], 9.0)
+        self.assertEqual(source["gust_kn"], 14.8)
+        self.assertEqual(source["direction_deg"], 239)
 
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):
@@ -111,6 +128,9 @@ class AppTests(unittest.TestCase):
 
 
 class QualityTests(unittest.TestCase):
+    def test_meteoswiss_timestamp_age_is_parsed(self):
+        self.assertIsNotNone(_observation_age_minutes("22.06.2026 12:30"))
+
     def test_daily_history_includes_direction(self):
         records = _daily_history({"daily": {
             "time": ["2026-06-20"],
@@ -137,6 +157,12 @@ class QualityTests(unittest.TestCase):
         station = {"available": True, "wind_kn": 15, "distance_km": 10}
         result = quality_report(model, station)
         self.assertEqual(result["score"], 80)
+
+    def test_old_station_measurement_is_capped(self):
+        model = {"available": True, "wind_kn": 15}
+        station = {"available": True, "wind_kn": 15, "distance_km": 0, "observation_age_minutes": 90}
+        result = quality_report(model, station)
+        self.assertEqual(result["score"], 70)
 
     def test_model_only_is_limited(self):
         result = quality_report({"available": True, "wind_kn": 12}, {"available": False})
