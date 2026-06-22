@@ -2,6 +2,11 @@
 
 Eine schnelle, mobile Windübersicht für ausgewählte Kite- und Foilspots in Europa, Afrika und Asien. Die App trennt echte Messungen konsequent von Modellwerten und bleibt auch dann bedienbar, wenn eine Wetterquelle ausfällt.
 
+Für Silvaplana enthält die App zusätzlich eine separate Wochenansicht mit den
+offiziellen MeteoSchweiz-10-Minuten-Messungen (Mittelwind, Böen und Richtung).
+Die lokale Kitesailing-Seite bleibt als Live-/Kurzzeitreferenz direkt am Spot
+verlinkt. Datenlücken werden niemals mit Modellwerten aufgefüllt.
+
 ## Was diese Version stabil macht
 
 - Die Startseite lädt **ohne Wetterabfrage**. Externe APIs können den Serverstart nicht mehr blockieren.

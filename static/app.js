@@ -7,6 +7,9 @@ const state = {
   historyData: null,
   historyView: 'month',
   historyDate: new Date(),
+  measurementController: null,
+  measurementData: null,
+  measurementDay: null,
 };
 
 function text(selector, value) { $(selector).textContent = value ?? '–'; }
@@ -25,6 +28,116 @@ function compass(degrees) {
   if (!Number.isFinite(degrees)) return '–';
   const names = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
   return names[Math.round(degrees / 22.5) % 16];
+}
+
+function localDayKey(raw) {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(raw));
+  const get = type => parts.find(item => item.type === type)?.value;
+  return `${get('year')}-${get('month')}-${get('day')}`;
+}
+
+function circularDirection(records) {
+  const values = records.map(item => item.direction_deg).filter(Number.isFinite);
+  if (!values.length) return null;
+  const radians = values.map(item => item * Math.PI / 180);
+  const angle = Math.atan2(radians.reduce((sum, item) => sum + Math.sin(item), 0), radians.reduce((sum, item) => sum + Math.cos(item), 0)) * 180 / Math.PI;
+  return Math.round((angle + 360) % 360);
+}
+
+function measurementPaths(records, key, maxValue) {
+  const width = 1000; const height = 165;
+  const groups = []; let group = [];
+  records.forEach((item, index) => {
+    const number = item[key];
+    const previous = index ? new Date(records[index - 1].time).getTime() : null;
+    const current = new Date(item.time).getTime();
+    if (!Number.isFinite(number) || (previous && current - previous > 21 * 60 * 1000)) {
+      if (group.length) groups.push(group);
+      group = [];
+    }
+    if (Number.isFinite(number)) {
+      const x = records.length > 1 ? index / (records.length - 1) * width : 0;
+      const y = height - number / maxValue * (height - 12);
+      group.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+  });
+  if (group.length) groups.push(group);
+  return groups.map(points => `<polyline class="${key === 'wind_kn' ? 'wind-line' : 'gust-line'}" points="${points.join(' ')}"/>`).join('');
+}
+
+function renderMeasurementHistory() {
+  const data = state.measurementData;
+  if (!data?.records?.length) return;
+  const days = [...new Set(data.records.map(item => localDayKey(item.time)))].sort();
+  if (!days.includes(state.measurementDay)) state.measurementDay = days.at(-1);
+  $('#measurement-days').innerHTML = days.map(day => {
+    const label = new Date(`${day}T12:00:00`).toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    return `<button class="${day === state.measurementDay ? 'active' : ''}" data-measurement-day="${day}" role="tab" aria-selected="${day === state.measurementDay}">${label}</button>`;
+  }).join('');
+  const records = data.records.filter(item => localDayKey(item.time) === state.measurementDay);
+  const winds = records.map(item => item.wind_kn).filter(Number.isFinite);
+  const gusts = records.map(item => item.gust_kn).filter(Number.isFinite);
+  const direction = circularDirection(records);
+  const maxValue = Math.max(10, ...winds, ...gusts);
+  const hourGroups = {};
+  records.forEach(item => {
+    const hour = new Intl.DateTimeFormat('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', hour12: false }).format(new Date(item.time));
+    (hourGroups[hour] ||= []).push(item);
+  });
+  const hourCards = Object.entries(hourGroups).map(([hour, items]) => {
+    const mean = average(items, 'wind_kn'); const peak = maximum(items, 'gust_kn'); const dir = circularDirection(items);
+    return `<div class="measurement-hour"><b>${hour}:00</b><strong>${value(mean, ' kn')}</strong><span>${Number.isFinite(dir) ? `${compass(dir)} · ${dir}°` : 'Richtung –'}</span><small>Böe ${value(peak, ' kn')} · ${items.length} Werte</small></div>`;
+  }).join('');
+  $('#measurement-content').innerHTML = `
+    <div class="measurement-summary">
+      <div><span>Ø Mittelwind</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><small>aus 10-Minuten-Werten</small></div>
+      <div><span>Stärkste Böe</span><strong>${value(maximum(records, 'gust_kn'), ' kn')}</strong><small>Tagesmaximum</small></div>
+      <div><span>Mittlere Richtung</span><strong>${Number.isFinite(direction) ? compass(direction) : '–'}</strong><small>${Number.isFinite(direction) ? `${direction}°` : 'nicht verfügbar'}</small></div>
+      <div><span>Messabdeckung</span><strong>${records.length}</strong><small>unveränderte Messpunkte</small></div>
+    </div>
+    <div class="measurement-plot">
+      <div class="measurement-legend"><span><i></i>Mittelwind</span><span><i class="gust"></i>Böen</span><span>Lücken bleiben sichtbar</span></div>
+      <svg viewBox="0 0 1000 180" role="img" aria-label="Gemessener Windverlauf am gewählten Tag">
+        <line class="grid" x1="0" y1="165" x2="1000" y2="165"/><line class="grid" x1="0" y1="88" x2="1000" y2="88"/>
+        ${measurementPaths(records, 'gust_kn', maxValue)}${measurementPaths(records, 'wind_kn', maxValue)}
+      </svg>
+      <div class="measurement-hours">${hourCards}</div>
+    </div>`;
+  $('#measurement-content').hidden = false;
+  $$('[data-measurement-day]').forEach(button => button.addEventListener('click', () => {
+    state.measurementDay = button.dataset.measurementDay;
+    renderMeasurementHistory();
+  }));
+}
+
+async function loadMeasurementHistory(spot) {
+  state.measurementController?.abort();
+  const controller = new AbortController();
+  state.measurementController = controller;
+  state.measurementData = null; state.measurementDay = null;
+  $('#measured-history').hidden = true;
+  $('#measurement-content').hidden = true;
+  $('#measurement-error').hidden = true;
+  $('#measurement-loading').hidden = false;
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(`/api/v1/measurement-history/${encodeURIComponent(spot)}`, { signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    if (!data.available) return;
+    state.measurementData = data;
+    $('#measured-history').hidden = false;
+    $('#measured-history-source').href = data.source_url;
+    text('#measured-history-description', `${data.station_name} (${data.distance_km} km) · offizielle 10-Minuten-Messwerte · Zeiten lokal Schweiz`);
+    renderMeasurementHistory();
+  } catch (error) {
+    if (controller.signal.aborted || state.measurementController !== controller) return;
+    $('#measured-history').hidden = false;
+    $('#measurement-error').hidden = false;
+  } finally {
+    clearTimeout(timeout);
+    if (state.measurementController === controller) $('#measurement-loading').hidden = true;
+  }
 }
 
 function browserQuality(model, station) {
@@ -431,6 +544,7 @@ async function load(spot = state.spot) {
     }
     render(data);
     loadHistory(spot, data.spot);
+    loadMeasurementHistory(spot);
     try { localStorage.setItem(`windatlas:${spot}`, JSON.stringify({ at: Date.now(), data })); } catch (_) {}
     $('#content').hidden = false;
   } catch (error) {

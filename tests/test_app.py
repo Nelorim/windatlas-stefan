@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 from config import SPOTS
-from services import _daily_history, _observation_age_minutes, direction_name, get_history, get_meteoswiss, kite_signal, quality_report
+from services import _daily_history, _observation_age_minutes, direction_name, get_history, get_measurement_history, get_meteoswiss, kite_signal, quality_report
 
 
 class AppTests(unittest.TestCase):
@@ -117,6 +117,22 @@ class AppTests(unittest.TestCase):
         self.assertEqual(source["gust_kn"], 14.8)
         self.assertEqual(source["direction_deg"], 239)
 
+    @patch("services._fetch_text")
+    def test_sia_measurement_history_contains_only_recent_real_values(self, fetch_text):
+        fetch_text.return_value = (
+            "station_abbr;reference_timestamp;dkl010z0;fu3010z0;fu3010z1\n"
+            "SIA;14.06.2026 12:00;180;9.26;18.52\n"
+            "SIA;21.06.2026 11:50;225;14.816;22.224\n"
+            "SIA;21.06.2026 12:00;230;16.668;24.076\n"
+        )
+        source = get_measurement_history(SPOTS["silvaplana"])
+        self.assertTrue(source["available"])
+        self.assertEqual(source["type"], "measurement")
+        self.assertEqual(len(source["records"]), 2)
+        self.assertEqual(source["records"][0]["wind_kn"], 8.0)
+        self.assertEqual(source["records"][0]["direction"], "SW")
+        self.assertIn("nicht modelliert", source["method"])
+
     @patch("services._fetch_json")
     def test_history_is_loaded_in_parallel_year_chunks(self, fetch_json):
         fetch_json.return_value = {
@@ -146,6 +162,13 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.json["available"])
         self.assertEqual(response.json["records"][0]["wind_kn"], 12)
+
+    @patch("app.get_measurement_history")
+    def test_measurement_history_endpoint(self, get_measurement_history):
+        get_measurement_history.return_value = {"available": True, "type": "measurement", "records": []}
+        response = self.client.get("/api/v1/measurement-history/silvaplana")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json["type"], "measurement")
 
 
 class QualityTests(unittest.TestCase):

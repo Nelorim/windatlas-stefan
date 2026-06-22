@@ -140,6 +140,28 @@ h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.04em; }
 .history-days { display: grid; grid-template-columns: repeat(7, minmax(105px, 1fr)); gap: 7px; min-width: 760px; }
 .history-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .history-summary-grid.five { grid-template-columns: repeat(5, 1fr); }
+.measured-history { border-color: rgba(98, 222, 188, .38); }
+.measurement-days { display: flex; gap: 7px; margin: 20px 0 14px; overflow-x: auto; }
+.measurement-days button { min-width: 88px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.035); color: var(--muted); padding: 9px 12px; cursor: pointer; }
+.measurement-days button.active { color: #062019; background: var(--mint); border-color: var(--mint); font-weight: 750; }
+.measurement-loading { min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 12px; }
+.measurement-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+.measurement-summary > div { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 4px; background: rgba(255,255,255,.025); }
+.measurement-summary span, .measurement-summary small { color: var(--muted); font-size: 10px; }
+.measurement-summary strong { font-size: 20px; }
+.measurement-plot { min-width: 720px; border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: rgba(255,255,255,.02); }
+.measurement-plot svg { width: 100%; height: 190px; overflow: visible; }
+.measurement-plot .grid { stroke: var(--line); stroke-width: 1; }
+.measurement-plot .wind-line { fill: none; stroke: var(--mint); stroke-width: 3; }
+.measurement-plot .gust-line { fill: none; stroke: #f2c45e; stroke-width: 2; opacity: .9; }
+.measurement-legend { display: flex; gap: 18px; color: var(--muted); font-size: 10px; margin-bottom: 10px; }
+.measurement-legend i { display: inline-block; width: 18px; height: 3px; margin-right: 6px; vertical-align: middle; background: var(--mint); }
+.measurement-legend .gust { background: #f2c45e; }
+.measurement-hours { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(92px, 1fr); gap: 7px; overflow-x: auto; margin-top: 12px; }
+.measurement-hour { border: 1px solid var(--line); border-radius: 10px; padding: 9px; display: grid; gap: 4px; }
+.measurement-hour b { font-size: 11px; }
+.measurement-hour strong { font-size: 15px; }
+.measurement-hour span, .measurement-hour small { color: var(--muted); font-size: 9px; }
 .source-grid { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .source { padding: 24px; min-height: 280px; }
 .source-badge { display: inline-block; border-radius: 999px; padding: 6px 9px; font-size: 9px; font-weight: 850; letter-spacing: .1em; }
@@ -169,6 +191,7 @@ footer a { color: var(--mint); text-decoration: none; }
   .truth-card { max-width: 480px; }
   .metric-grid, .source-grid { grid-template-columns: 1fr; }
   .history-summary-grid, .history-summary-grid.five { grid-template-columns: repeat(2, 1fr); }
+  .measurement-summary { grid-template-columns: repeat(2, 1fr); }
   .wind-card { min-height: 330px; }
   .quality-card { min-height: 290px; }
   .source { min-height: 0; }

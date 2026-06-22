@@ -22,6 +22,10 @@ METEOSWISS_FILE = (
     "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/"
     "{station}/ogd-smn_{station}_t_now.csv"
 )
+METEOSWISS_RECENT_FILE = (
+    "https://data.geo.admin.ch/ch.meteoschweiz.ogd-smn/"
+    "{station}/ogd-smn_{station}_t_recent.csv"
+)
 
 
 @dataclass
@@ -361,6 +365,77 @@ def get_meteoswiss(spot: dict[str, Any]) -> dict[str, Any]:
         }
 
     return _cached_fetch(key, ttl=600, stale_for=43_200, loader=load)
+
+
+def get_measurement_history(spot: dict[str, Any]) -> dict[str, Any]:
+    """Return seven days of genuine 10-minute station observations.
+
+    No forecast or reanalysis values are used to fill gaps. At present this
+    adapter is enabled only for configured MeteoSwiss stations.
+    """
+    station = spot.get("station")
+    if not station:
+        return {
+            "available": False,
+            "reason": "Für diesen Spot ist keine frei abrufbare Messhistorie eingebunden.",
+            "fetched_at": _iso_now(),
+        }
+    station_id = station["id"].lower()
+    url = METEOSWISS_RECENT_FILE.format(station=station_id)
+    key = f"measurement-history:{station_id}"
+
+    def load() -> dict[str, Any]:
+        rows = _csv_rows(_fetch_text(url, timeout=15.0))
+        parsed: list[tuple[datetime, dict[str, Any]]] = []
+        for row in rows:
+            raw_stamp = _first(row, "reference_timestamp", "timestamp", "time", "date")
+            try:
+                stamp = datetime.strptime(raw_stamp or "", "%d.%m.%Y %H:%M").replace(tzinfo=timezone.utc)
+            except ValueError:
+                continue
+            wind = _kmh_to_kn(_number(_first(row, "fu3010z0")))
+            if wind is None:
+                continue
+            gust = _kmh_to_kn(_number(_first(row, "fu3010z1")))
+            direction = _number(_first(row, "dkl010z0"))
+            if gust is not None and gust < wind:
+                gust = None
+            if direction is not None and not 0 <= direction <= 360:
+                direction = None
+            parsed.append(
+                (
+                    stamp,
+                    {
+                        "time": stamp.isoformat(timespec="minutes").replace("+00:00", "Z"),
+                        "wind_kn": wind,
+                        "gust_kn": gust,
+                        "direction_deg": direction,
+                        "direction": direction_name(direction),
+                    },
+                )
+            )
+        if not parsed:
+            raise ValueError("MeteoSwiss recent file contains no wind observations")
+        latest = max(item[0] for item in parsed)
+        start = latest - timedelta(days=7)
+        records = [record for stamp, record in parsed if start < stamp <= latest]
+        return {
+            "available": True,
+            "type": "measurement",
+            "provider": "MeteoSchweiz",
+            "station_id": station["id"],
+            "station_name": station["name"],
+            "distance_km": station["distance_km"],
+            "source_url": url,
+            "method": "Unveränderte 10-Minuten-Stationsmessungen; Datenlücken werden nicht modelliert.",
+            "timezone": "UTC",
+            "start_time": records[0]["time"],
+            "end_time": records[-1]["time"],
+            "fetched_at": _iso_now(),
+            "records": records,
+        }
+
+    return _cached_fetch(key, ttl=600, stale_for=86_400, loader=load)
 
 
 def _kmh_to_kn(value: float | None) -> float | None:
