@@ -1,20 +1,5 @@
 """Curated spot configuration. Keep editorial facts separate from live data."""
 
-KWIND = {
-    "name": "KWind",
-    "url": "https://kwind.app/search",
-    "kind": "Zusätzliche Live-Stationen extern prüfen",
-}
-
-KWIND_SILVAPLANA = {
-    "name": "KWind Live",
-    "url": "https://kwind.app/station/670cd9f112daffeffb13a8a0",
-    "history_url": "https://kwind.app/station/670cd9f112daffeffb13a8a0/windhistory",
-    "widget_url": "https://kwind.app/widget/670cd9f112daffeffb13a8a0?background=%230a2026&darkText=false&showHistory=true&show3dMap=false&showData=true&showForecast=false",
-    "station_id": "670cd9f112daffeffb13a8a0",
-    "kind": "Externe KWind-Livestation mit Messhistorie",
-}
-
 KWIND_HURGHADA = {
     "name": "KWind Live",
     "url": "https://kwind.app/station/64f17bf1779ccbba6bfef479",
@@ -36,12 +21,11 @@ WINDGURU_MALCESINE = {
 }
 
 WINDGURU_JAMBIANI = {
-    "url": "https://www.windguru.cz/1095629",
+    "url": "https://www.windguru.cz/station/5839",
     "stations": [
-        {"name": "Jambiani Kibijija / Coconuts Kite", "distance_km": 4.6},
-        {"name": "Paje Beach / Mahali Zanzibar", "distance_km": 8.3},
+        {"name": "Jambiani Kibijija / Coconuts Kite", "distance_km": 0},
     ],
-    "note": "Nahe Küstenstationen; Gezeiten und lokale Abschattung bleiben zusätzlich zu prüfen.",
+    "note": "Direkte Windguru-Livestation in Jambiani; Gezeiten und lokale Abschattung zusätzlich prüfen.",
 }
 
 WINDGURU_BERLINGEN = {
@@ -77,7 +61,15 @@ SPOTS = {
         "lat": 46.459,
         "lon": 9.795,
         "station": {"id": "SAM", "name": "Samedan", "distance_km": 10},
-        "kwind": KWIND_SILVAPLANA,
+        "kwind": None,
+        "external_measurements": [
+            {
+                "name": "MeteoSchweiz Station SIA",
+                "url": "https://www.meteoschweiz.admin.ch/service-und-publikationen/applikationen/messwerte.html#param=messwerte-windgeschwindigkeit-kmh-10min&table=false&station=SIA",
+                "kind": "Offizielle 10-Minuten-Windmessung als zusätzliche Oberengadin-Referenz",
+                "note": "Quelle: MeteoSchweiz; Stationswert und Lage getrennt von Samedan beurteilen.",
+            },
+        ],
         "kite": {"min_kn": 9, "max_kn": 28, "directions": ["S", "SW", "WSW"]},
         "local_note": "Der thermische Malojawind ist lokal geprägt und wird vom Talmodell oft unterschätzt.",
         "spotguide": {
@@ -98,7 +90,15 @@ SPOTS = {
         "lat": 41.681,
         "lon": -8.833,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
+        "external_measurements": [
+            {
+                "name": "WeatherLink Praia do Cabedelo",
+                "url": "https://www.weatherlink.com/embeddablePage/show/0722f5db3b314dd9a179ba37f6c4b772/fullscreen",
+                "kind": "Live-Wetterstation am Spot Viana do Castelo / Cabedelo",
+                "note": "Externe Davis-WeatherLink-Anzeige; Werte werden nicht serverseitig kopiert.",
+            },
+        ],
         "kite": {"min_kn": 11, "max_kn": 34, "directions": ["N", "NNW", "NW"]},
         "local_note": "Atlantikspot mit thermischer Verstärkung und Welle; Gezeiten und Shorebreak vor Ort prüfen.",
         "school": {
@@ -114,8 +114,16 @@ SPOTS = {
         "lat": 45.764,
         "lon": 10.813,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
         "windguru": WINDGURU_MALCESINE,
+        "external_measurements": [
+            {
+                "name": "Kitecampione Anemometer",
+                "url": "https://www.kitecampione.net/",
+                "kind": "Live-Anemometer in Campione del Garda",
+                "note": "Regionale Gardasee-Referenz, keine direkte Messung in Malcesine.",
+            },
+        ],
         "kite": {"min_kn": 9, "max_kn": 30, "directions": ["N", "S"]},
         "local_note": "Peler am Morgen und Ora am Nachmittag sind thermisch geprägt; Startregeln und Lift-Betrieb beachten.",
         "school": {
@@ -131,7 +139,7 @@ SPOTS = {
         "lat": 46.138,
         "lon": 9.377,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
         "kite": {"min_kn": 9, "max_kn": 29, "directions": ["S", "SSW", "N"]},
         "local_note": "Die Breva baut sich lokal am nördlichen Comer See auf und kann vom Flächenmodell unterschätzt werden.",
         "school": {
@@ -147,7 +155,16 @@ SPOTS = {
         "lat": 54.130,
         "lon": 13.510,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
+        "external_measurements": [
+            {
+                "name": "Windfinder Greifswald",
+                "url": "https://de.windfinder.com/forecast/greifswald",
+                "kind": "Lokale Stationsmessung als regionale Referenz für Loissin",
+                "distance_km": 8.2,
+                "note": "Windfinder-Login und Premium-Abo bleiben ausschließlich im Browser des Nutzers.",
+            },
+        ],
         "kite": {"min_kn": 10, "max_kn": 30, "directions": ["W", "NW", "N", "NE"]},
         "local_note": "Flaches Boddenrevier; Startzone, Schulungsbereiche und lokale Naturschutzregeln beachten.",
         "school": {
@@ -163,7 +180,7 @@ SPOTS = {
         "lat": -6.318,
         "lon": 39.548,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
         "windguru": WINDGURU_JAMBIANI,
         "kite": {"min_kn": 10, "max_kn": 31, "directions": ["NE", "E", "SE"]},
         "local_note": "Starker Gezeiteneinfluss in der Lagune; fahrbare Wassertiefe und Riffzugang vor Ort prüfen.",
@@ -180,10 +197,10 @@ SPOTS = {
         "lat": 47.671,
         "lon": 9.020,
         "station": {"id": "GUT", "name": "Güttingen", "distance_km": 31},
-        "kwind": KWIND,
+        "kwind": None,
         "windguru": WINDGURU_BERLINGEN,
         "kite": {"min_kn": 10, "max_kn": 28, "directions": ["W", "NW", "NE", "E"]},
-        "local_note": "Die MeteoSchweiz-Station liegt nicht direkt am Spot; KWind und die Sichtprüfung am See ergänzend nutzen.",
+        "local_note": "Die MeteoSchweiz-Station liegt nicht direkt am Spot; regionale Livequellen und die Sichtprüfung am See ergänzend nutzen.",
         "spotguide": {
             "name": "Unhooked Spotguide",
             "url": "https://www.unhooked.ch/2008/spotguide/berlingen/",
@@ -197,7 +214,7 @@ SPOTS = {
         "lat": -5.6474,
         "lon": 119.5714,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
         "kite": {"min_kn": 11, "max_kn": 35, "directions": ["E", "ESE", "SE"]},
         "local_note": "Der konkrete Spot ist Jeneponto/Mallasoro in Süd-Sulawesi; Hauptwindsaison ist typischerweise Mai bis Oktober.",
         "school": {
@@ -213,7 +230,7 @@ SPOTS = {
         "lat": 34.8171,
         "lon": 33.5480,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
         "kite": {"min_kn": 10, "max_kn": 31, "directions": ["SW", "WSW", "W"]},
         "local_note": "Thermik verstärkt sich meist nach Mittag; nur ausgewiesene Kitebereiche und lokale Regeln nutzen.",
         "school": {
@@ -246,7 +263,7 @@ SPOTS = {
         "lat": 27.3177,
         "lon": 33.7108,
         "station": None,
-        "kwind": KWIND_HURGHADA,
+        "kwind": None,
         "windguru": WINDGURU_HURGHADA,
         "kite": {"min_kn": 11, "max_kn": 34, "directions": ["N", "NNW", "NW"]},
         "local_note": "Rotes-Meer-Spot mit typischem Nordwind; Windabdeckung, Riff und Centerregeln vor Ort prüfen.",
@@ -263,7 +280,7 @@ SPOTS = {
         "lat": 10.9412,
         "lon": 108.1938,
         "station": None,
-        "kwind": KWIND,
+        "kwind": None,
         "windguru": WINDGURU_MUI_NE,
         "kite": {"min_kn": 11, "max_kn": 35, "directions": ["NE", "ENE", "E", "SW", "WSW"]},
         "local_note": "C2Sky liegt direkt am Strand von Mui Ne. Die veröffentlichte Live-Messung stammt aus einer eingebundenen Windguru-Station; Monsunrichtung und Shorebreak vor Ort prüfen.",

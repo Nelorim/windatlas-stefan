@@ -210,6 +210,27 @@ function renderSource(data) {
     text('#windguru-note', '');
   }
 
+  const externalMeasurements = data.spot.external_measurements || [];
+  const externalPanel = $('#external-live');
+  const externalSources = $('#external-sources');
+  externalPanel.hidden = externalMeasurements.length === 0;
+  externalSources.replaceChildren();
+  externalMeasurements.forEach(item => {
+    const link = document.createElement('a');
+    const name = document.createElement('strong');
+    const kind = document.createElement('span');
+    const meta = document.createElement('small');
+    link.href = item.url;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    name.textContent = item.name;
+    kind.textContent = item.kind;
+    const distance = Number.isFinite(item.distance_km) ? `${item.distance_km} km entfernt · ` : '';
+    meta.textContent = `${distance}${item.note || 'Extern öffnen'}`;
+    link.append(name, kind, meta);
+    externalSources.append(link);
+  });
+
   const model = data.model;
   $('#model-card').classList.toggle('unavailable', !model.available);
   text('#model-wind', value(model.wind_kn, ' kn'));

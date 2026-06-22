@@ -96,6 +96,13 @@ h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.04em; }
 .windguru-stations strong { font-size: 12px; }
 .windguru-stations span, .windguru-note { color: var(--muted); font-size: 10px; }
 .windguru-note { margin: 14px 0 0; line-height: 1.5; }
+.external-live { margin-top: 16px; padding: 24px 26px; }
+.external-sources { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 20px; }
+.external-sources a { display: grid; gap: 6px; border: 1px solid var(--line); border-radius: 13px; padding: 15px 16px; background: rgba(255,255,255,.025); color: var(--ink); text-decoration: none; }
+.external-sources a:hover { border-color: var(--mint); }
+.external-sources strong { font-size: 12px; }
+.external-sources span { color: var(--mint); font-size: 10px; }
+.external-sources small { color: var(--muted); font-size: 9px; line-height: 1.5; }
 .chart { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(58px, 1fr); gap: 7px; height: 205px; margin-top: 18px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
 .chart-hour { min-width: 58px; display: grid; grid-template-rows: 1fr auto auto; gap: 6px; align-items: end; text-align: center; }
 .chart-bar-wrap { height: 130px; display: flex; align-items: end; justify-content: center; border-bottom: 1px solid var(--line); }
@@ -175,6 +182,7 @@ footer a { color: var(--mint); text-decoration: none; }
   .history { padding: 20px 14px; }
   .kwind-live { padding: 20px 14px; }
   .windguru-live { padding: 20px 14px; }
+  .external-live { padding: 20px 14px; }
   .kwind-live iframe { min-height: 430px; }
   .history-head { display: block; }
   .history-head > a { display: inline-block; margin-top: 10px; }

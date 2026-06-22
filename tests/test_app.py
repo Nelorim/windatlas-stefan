@@ -44,10 +44,10 @@ class AppTests(unittest.TestCase):
         self.assertIn("unhooked.ch", SPOTS["silvaplana"]["spotguide"]["url"])
         self.assertIn("unhooked.ch", SPOTS["berlingen"]["spotguide"]["url"])
 
-    def test_fixed_kwind_station_and_history_are_linked(self):
-        kwind = SPOTS["silvaplana"]["kwind"]
-        self.assertEqual(kwind["station_id"], "670cd9f112daffeffb13a8a0")
-        self.assertIn("windhistory", kwind["history_url"])
+    def test_kwind_is_only_enabled_for_kb_zone(self):
+        linked = {spot_id for spot_id, spot in SPOTS.items() if spot.get("kwind")}
+        self.assertEqual(linked, {"kb-zone"})
+        self.assertEqual(SPOTS["kb-zone"]["kwind"]["station_id"], "64f17bf1779ccbba6bfef479")
 
     def test_silvaplana_uses_current_kitesailing_weather_page(self):
         source = SPOTS["silvaplana"]["school"]
@@ -58,12 +58,8 @@ class AppTests(unittest.TestCase):
         self.assertIn("c2skykitecenter.com", SPOTS["mui-ne"]["school"]["url"])
         self.assertIn("14164", SPOTS["mui-ne"]["school"]["kind"])
 
-    def test_hurghada_spots_share_fixed_kwind_station(self):
-        kb_station = SPOTS["kb-zone"]["kwind"]
-        selena_station = SPOTS["selena-bay"]["kwind"]
-        self.assertEqual(kb_station["station_id"], "64f17bf1779ccbba6bfef479")
-        self.assertEqual(selena_station["station_id"], kb_station["station_id"])
-        self.assertIn("windhistory", kb_station["history_url"])
+    def test_selena_bay_does_not_use_kwind(self):
+        self.assertIsNone(SPOTS["selena-bay"]["kwind"])
 
     def test_windguru_links_only_have_verified_station_distances(self):
         linked = {spot_id: spot["windguru"] for spot_id, spot in SPOTS.items() if spot.get("windguru")}
@@ -81,6 +77,22 @@ class AppTests(unittest.TestCase):
     def test_hurghada_spots_share_windguru_reference(self):
         self.assertIs(SPOTS["kb-zone"]["windguru"], SPOTS["selena-bay"]["windguru"])
         self.assertEqual(SPOTS["kb-zone"]["windguru"]["stations"][0]["distance_km"], 2.2)
+
+    def test_jambiani_uses_direct_windguru_station(self):
+        source = SPOTS["jambiani"]["windguru"]
+        self.assertTrue(source["url"].endswith("/station/5839"))
+        self.assertEqual(source["stations"][0]["distance_km"], 0)
+
+    def test_requested_external_measurements_are_linked(self):
+        expected_hosts = {
+            "silvaplana": "meteoschweiz.admin.ch",
+            "viana": "weatherlink.com",
+            "malcesine": "kitecampione.net",
+            "loissin": "windfinder.com",
+        }
+        for spot_id, host in expected_hosts.items():
+            self.assertIn(host, SPOTS[spot_id]["external_measurements"][0]["url"])
+        self.assertEqual(SPOTS["loissin"]["external_measurements"][0]["distance_km"], 8.2)
 
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):

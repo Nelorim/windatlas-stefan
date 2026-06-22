@@ -18,8 +18,9 @@ Eine schnelle, mobile Windübersicht für ausgewählte Kite- und Foilspots in Eu
 |---|---|---|
 | MeteoSchweiz SwissMetNet | echte automatische Stationsmessung | 10 Minuten |
 | Open-Meteo | Wettermodell am Spot, keine Messung | typischerweise 1–6 Stunden je Modell |
-| KWind | externes Live-Stationsnetz; Suche wird direkt geöffnet | abhängig von lokaler Station |
+| KWind | externe Live-Station ausschließlich für KB-Zone | abhängig von der Station |
 | Windguru Live Wind | verlinkte nahe Messstationen mit geprüfter Distanz; keine kopierten Rohwerte | abhängig von der Station |
+| WeatherLink, Windfinder, Kitecampione | zusätzliche externe Live-Seiten; kein serverseitiges Kopieren | abhängig vom Anbieter |
 | Kiteschulen / Clubs | öffentlich geprüfter lokaler Kontext | redaktionelles Prüfdatum |
 
 Der Qualitätswert berücksichtigt Quellenverfügbarkeit, Stationsdistanz und Abweichung zwischen Messung und Modell. Er ist transparent und bewusst konservativ. Die Kite-Ampel ist nur eine Entscheidungshilfe, niemals eine Sicherheitsfreigabe.
@@ -32,11 +33,13 @@ Die Historie stammt aus der Open-Meteo Historical Weather API. Es handelt sich u
 
 KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 
-Für Silvaplana ist zusätzlich die vom Nutzer bereitgestellte feste KWind-Station `670cd9f112daffeffb13a8a0` über das offizielle KWind-Widget eingebunden. Livewerte und Messhistorie bleiben dabei technisch bei KWind. MeteoSchweiz Samedan wird nur als regionale Referenz behandelt und kann wegen der Distanz keine Datenqualität von 100/100 mehr erzeugen.
+Für Silvaplana bleibt MeteoSchweiz Samedan die automatisch gelesene regionale Referenz. Die zusätzliche MeteoSchweiz-Anzeige der Station `SIA` ist direkt verknüpft. Wegen der Stationsdistanz kann die Hauptreferenz keine Datenqualität von 100/100 erzeugen.
 
 Mui Ne (Vietnam) ist als weiterer Spot enthalten. Die lokale Quelle ist die C2Sky-Webcamseite mit eingebundener Windguru-Livestation `14164`; Open-Meteo bleibt als klar gekennzeichneter Modellvergleich bestehen.
 
-KB-Zone und Selena Bay verwenden zusätzlich die feste, vom Nutzer zugeordnete KWind-Station `64f17bf1779ccbba6bfef479`. Liveansicht und Messhistorie werden über das offizielle KWind-Widget beziehungsweise direkte KWind-Links geöffnet; WindAtlas speichert keine KWind-Rohdaten.
+Nur KB-Zone verwendet die feste, vom Nutzer zugeordnete KWind-Station `64f17bf1779ccbba6bfef479`. Selena Bay und alle anderen Spots verwenden KWind ausdrücklich nicht. Liveansicht und Messhistorie werden über das offizielle KWind-Widget beziehungsweise direkte KWind-Links geöffnet; WindAtlas speichert keine KWind-Rohdaten.
+
+Weitere konkret zugeordnete Messseiten sind WeatherLink Praia do Cabedelo für Viana do Castelo, Kitecampione als regionale Gardasee-Referenz für Malcesine und Windfinder Greifswald als 8,2 km entfernte Referenz für Loissin. Ein vorhandenes Windfinder-Premium-Abo wird nur in der persönlichen Browsersitzung genutzt; WindAtlas speichert weder Zugangsdaten noch Premium-Inhalte.
 
 Windguru Live Wind ist zusätzlich für Malcesine, Jambiani, Berlingen, KB-Zone, Selena Bay und Mui Ne verknüpft. Angezeigt werden nur redaktionell bestätigte Stationsnamen und Distanzen. Bei Colico und Silvaplana wurden nahe Bergstationen bewusst nicht als Spotmessung übernommen; für Viana, Loissin, Sulawesi und Softades fehlt derzeit eine ausreichend eindeutig bestätigte nahe Windguru-Messstation. Externe Windguru-Werte erhöhen den WindAtlas-Qualitätswert nicht automatisch.
 
