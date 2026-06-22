@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 from config import SPOTS
-from services import _daily_history, _observation_age_minutes, direction_name, get_history, get_measurement_history, get_meteoswiss, kite_signal, quality_report
+from services import _daily_history, _observation_age_minutes, direction_name, get_history, get_measurement_history, get_meteoswiss, get_open_meteo, kite_signal, quality_report
 
 
 class AppTests(unittest.TestCase):
@@ -132,6 +132,25 @@ class AppTests(unittest.TestCase):
         self.assertEqual(source["records"][0]["wind_kn"], 8.0)
         self.assertEqual(source["records"][0]["direction"], "SW")
         self.assertIn("nicht modelliert", source["method"])
+
+    @patch("services._fetch_json")
+    def test_forecast_contains_full_seven_days(self, fetch_json):
+        times = [f"2026-06-{22 + index // 24:02d}T{index % 24:02d}:00" for index in range(168)]
+        fetch_json.return_value = {
+            "current": {
+                "time": times[0], "temperature_2m": 15, "wind_speed_10m": 8,
+                "wind_direction_10m": 220, "wind_gusts_10m": 14, "cloud_cover": 10,
+            },
+            "hourly": {
+                "time": times, "wind_speed_10m": [8] * 168,
+                "wind_direction_10m": [220] * 168, "wind_gusts_10m": [14] * 168,
+                "temperature_2m": [15] * 168, "precipitation_probability": [0] * 168,
+            },
+        }
+        spot = {"lat": 88.1, "lon": 77.2}
+        source = get_open_meteo(spot)
+        self.assertEqual(len(source["forecast"]), 168)
+        self.assertIn("forecast_days=7", fetch_json.call_args.args[0])
 
     @patch("services._fetch_json")
     def test_history_is_loaded_in_parallel_year_chunks(self, fetch_json):

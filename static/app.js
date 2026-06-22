@@ -10,6 +10,8 @@ const state = {
   measurementController: null,
   measurementData: null,
   measurementDay: null,
+  liveData: null,
+  forecastView: 'three',
 };
 
 function text(selector, value) { $(selector).textContent = value ?? '–'; }
@@ -68,46 +70,38 @@ function measurementPaths(records, key, maxValue) {
 function renderMeasurementHistory() {
   const data = state.measurementData;
   if (!data?.records?.length) return;
-  const days = [...new Set(data.records.map(item => localDayKey(item.time)))].sort();
-  if (!days.includes(state.measurementDay)) state.measurementDay = days.at(-1);
-  $('#measurement-days').innerHTML = days.map(day => {
-    const label = new Date(`${day}T12:00:00`).toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
-    return `<button class="${day === state.measurementDay ? 'active' : ''}" data-measurement-day="${day}" role="tab" aria-selected="${day === state.measurementDay}">${label}</button>`;
-  }).join('');
-  const records = data.records.filter(item => localDayKey(item.time) === state.measurementDay);
+  const records = data.records;
   const winds = records.map(item => item.wind_kn).filter(Number.isFinite);
   const gusts = records.map(item => item.gust_kn).filter(Number.isFinite);
   const direction = circularDirection(records);
   const maxValue = Math.max(10, ...winds, ...gusts);
-  const hourGroups = {};
-  records.forEach(item => {
-    const hour = new Intl.DateTimeFormat('de-CH', { timeZone: 'Europe/Zurich', hour: '2-digit', hour12: false }).format(new Date(item.time));
-    (hourGroups[hour] ||= []).push(item);
-  });
-  const hourCards = Object.entries(hourGroups).map(([hour, items]) => {
-    const mean = average(items, 'wind_kn'); const peak = maximum(items, 'gust_kn'); const dir = circularDirection(items);
-    return `<div class="measurement-hour"><b>${hour}:00</b><strong>${value(mean, ' kn')}</strong><span>${Number.isFinite(dir) ? `${compass(dir)} · ${dir}°` : 'Richtung –'}</span><small>Böe ${value(peak, ' kn')} · ${items.length} Werte</small></div>`;
+  const start = new Date(records[0].time).getTime();
+  const end = new Date(records.at(-1).time).getTime();
+  const days = [...new Set(records.map(item => localDayKey(item.time)))].sort();
+  const dayCards = days.map(day => {
+    const items = records.filter(item => localDayKey(item.time) === day);
+    const dir = circularDirection(items);
+    const label = new Date(`${day}T12:00:00`).toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    return `<div class="measurement-hour"><b>${label}</b><strong>${value(average(items, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(dir) ? `${compass(dir)} · ${dir}°` : 'Richtung –'}</span><small>Maximum ${value(maximum(items, 'gust_kn'), ' kn')} · ${items.length} Werte</small></div>`;
   }).join('');
   $('#measurement-content').innerHTML = `
     <div class="measurement-summary">
-      <div><span>Ø Mittelwind</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><small>aus 10-Minuten-Werten</small></div>
-      <div><span>Stärkste Böe</span><strong>${value(maximum(records, 'gust_kn'), ' kn')}</strong><small>Tagesmaximum</small></div>
+      <div><span>Ø Mittelwind · 7 Tage</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><small>aus 10-Minuten-Werten</small></div>
+      <div><span>Stärkste Böe</span><strong>${value(maximum(records, 'gust_kn'), ' kn')}</strong><small>Wochenmaximum</small></div>
       <div><span>Mittlere Richtung</span><strong>${Number.isFinite(direction) ? compass(direction) : '–'}</strong><small>${Number.isFinite(direction) ? `${direction}°` : 'nicht verfügbar'}</small></div>
       <div><span>Messabdeckung</span><strong>${records.length}</strong><small>unveränderte Messpunkte</small></div>
     </div>
-    <div class="measurement-plot">
-      <div class="measurement-legend"><span><i></i>Mittelwind</span><span><i class="gust"></i>Böen</span><span>Lücken bleiben sichtbar</span></div>
-      <svg viewBox="0 0 1000 180" role="img" aria-label="Gemessener Windverlauf am gewählten Tag">
-        <line class="grid" x1="0" y1="165" x2="1000" y2="165"/><line class="grid" x1="0" y1="88" x2="1000" y2="88"/>
-        ${measurementPaths(records, 'gust_kn', maxValue)}${measurementPaths(records, 'wind_kn', maxValue)}
+    <div class="measurement-plot week">
+      <div class="measurement-legend"><span><i></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><span>Zahlen: Messwerte in kn · Lücken bleiben sichtbar</span></div>
+      <svg viewBox="0 0 1000 220" role="img" aria-label="Gemessener Windverlauf der letzten sieben Tage">
+        <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
+        ${timelineLines(records, 'gust_kn', start, end, maxValue, 'gust-line', 21)}${timelineLines(records, 'wind_kn', start, end, maxValue, 'wind-line', 21)}
+        ${timelineLabels(records, 'wind_kn', start, end, maxValue, 36, 'measured', 15)}
       </svg>
-      <div class="measurement-hours">${hourCards}</div>
+      <div class="timeline-axis"><span>${dateTime(records[0].time)}</span><b>7 Tage gemessen</b><span>${dateTime(records.at(-1).time)}</span></div>
+      <div class="measurement-hours">${dayCards}</div>
     </div>`;
   $('#measurement-content').hidden = false;
-  $$('[data-measurement-day]').forEach(button => button.addEventListener('click', () => {
-    state.measurementDay = button.dataset.measurementDay;
-    renderMeasurementHistory();
-  }));
 }
 
 async function loadMeasurementHistory(spot) {
@@ -130,6 +124,7 @@ async function loadMeasurementHistory(spot) {
     $('#measured-history-source').href = data.source_url;
     text('#measured-history-description', `${data.station_name} (${data.distance_km} km) · offizielle 10-Minuten-Messwerte · Zeiten lokal Schweiz`);
     renderMeasurementHistory();
+    renderChart();
   } catch (error) {
     if (controller.signal.aborted || state.measurementController !== controller) return;
     $('#measured-history').hidden = false;
@@ -177,7 +172,7 @@ async function fetchBrowserModel(spot, signal) {
     latitude: spot.lat, longitude: spot.lon,
     current: 'temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,cloud_cover',
     hourly: 'wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability',
-    forecast_days: '2', timezone: 'auto', wind_speed_unit: 'kn',
+    forecast_days: '7', timezone: 'auto', wind_speed_unit: 'kn',
   });
   const url = `https://api.open-meteo.com/v1/forecast?${params}`;
   const response = await fetch(url, { signal });
@@ -249,18 +244,83 @@ async function fetchBrowserHistory(spot, signal) {
   };
 }
 
-function renderChart(forecast = []) {
+function timelineLines(records, key, start, end, maxValue, className, gapMinutes) {
+  const width = 1000; const height = 205; const duration = end - start;
+  const valid = records.filter(item => {
+    const time = new Date(item.time).getTime();
+    return Number.isFinite(item[key]) && time >= start && time <= end;
+  }).sort((a, b) => new Date(a.time) - new Date(b.time));
+  const groups = []; let group = [];
+  valid.forEach((item, index) => {
+    const time = new Date(item.time).getTime();
+    const previous = index ? new Date(valid[index - 1].time).getTime() : null;
+    if (previous && time - previous > gapMinutes * 60 * 1000) {
+      if (group.length) groups.push(group);
+      group = [];
+    }
+    const x = (time - start) / duration * width;
+    const y = height - item[key] / maxValue * (height - 14);
+    group.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  });
+  if (group.length) groups.push(group);
+  return groups.map(points => `<polyline class="${className}" points="${points.join(' ')}"/>`).join('');
+}
+
+function timelineLabels(records, key, start, end, maxValue, every, dotType = '', offsetY = -10) {
+  const width = 1000; const height = 205; const duration = end - start;
+  return records.filter((item, index) => index % every === 0 && Number.isFinite(item[key])).map(item => {
+    const time = new Date(item.time).getTime();
+    if (time < start || time > end) return '';
+    const x = (time - start) / duration * width;
+    const y = height - item[key] / maxValue * (height - 14);
+    const labelY = Math.max(12, y + offsetY);
+    return `<circle class="timeline-dot ${dotType}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"><title>${dateTime(item.time)} · ${item[key]} kn</title></circle><text class="timeline-value" x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle">${item[key]}</text>`;
+  }).join('');
+}
+
+function timelineDayCards(forecast, start, end) {
+  const cards = [];
+  for (let cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+    const key = localDayKey(cursor.toISOString());
+    const records = forecast.filter(item => localDayKey(item.time) === key);
+    if (!records.length) continue;
+    const direction = circularDirection(records);
+    const label = cursor.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
+    cards.push(`<div class="timeline-day"><b>${label}</b><span class="type">PROGNOSE</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(direction) ? `${compass(direction)} · ${direction}°` : 'Richtung –'}</span><small>Maximum ${value(maximum(records, 'gust_kn'), ' kn')}</small></div>`);
+  }
+  return cards.join('');
+}
+
+function renderChart() {
   const chart = $('#forecast-chart');
-  const now = Date.now() - 60 * 60 * 1000;
-  const future = forecast.filter(item => new Date(item.time).getTime() >= now).slice(0, 16);
-  const max = Math.max(20, ...future.map(item => item.gust_kn || item.wind_kn || 0));
-  chart.innerHTML = future.map(item => {
-    const wind = item.wind_kn || 0;
-    const height = Math.max(4, Math.round((wind / max) * 112));
-    const hour = new Date(item.time).toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
-    const direction = Number.isFinite(item.direction_deg) ? `${compass(item.direction_deg)} ${Math.round(item.direction_deg)}°` : 'Richtung –';
-    return `<div class="chart-hour"><div class="chart-bar-wrap"><span class="chart-bar" data-value="${wind}" style="height:${height}px"></span></div><b>${hour}</b><small>${direction}<br>${item.gust_kn ?? '–'} Böe</small></div>`;
-  }).join('') || '<p>Keine Prognose verfügbar.</p>';
+  const forecast = (state.liveData?.model?.forecast || []).filter(item => new Date(item.time).getTime() >= Date.now() - 60 * 60 * 1000);
+  const now = Date.now();
+  const days = state.forecastView === 'week' ? 7 : state.forecastView === 'three' ? 3 : 1;
+  const start = now - 60 * 60 * 1000;
+  let end;
+  if (state.forecastView === 'day') end = now + 24 * 60 * 60 * 1000;
+  else {
+    const finalDay = new Date(now);
+    finalDay.setDate(finalDay.getDate() + days - 1);
+    finalDay.setHours(23, 59, 59, 999);
+    end = finalDay.getTime();
+  }
+  const visible = forecast.filter(item => { const time = new Date(item.time).getTime(); return time >= start && time <= end; });
+  if (!visible.length) {
+    chart.innerHTML = '<p>Keine Prognose verfügbar.</p>';
+    return;
+  }
+  const maxValue = Math.max(10, ...visible.flatMap(item => [item.wind_kn, item.gust_kn]).filter(Number.isFinite));
+  const labelEvery = state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12;
+  const minWidth = state.forecastView === 'day' ? 760 : state.forecastView === 'three' ? 1250 : 1700;
+  const cards = `<div class="timeline-days">${timelineDayCards(forecast, new Date(start), new Date(end))}</div>`;
+  chart.innerHTML = `<div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
+    <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
+    ${timelineLines(forecast, 'gust_kn', start, end, maxValue, 'forecast-gust', 91)}
+    ${timelineLines(forecast, 'wind_kn', start, end, maxValue, 'forecast-wind', 91)}
+    ${timelineLabels(forecast, 'gust_kn', start, end, maxValue, labelEvery, 'gust', -12)}
+    ${timelineLabels(forecast, 'wind_kn', start, end, maxValue, labelEvery, 'forecast', 17)}
+    </svg><div class="timeline-axis"><span>Jetzt</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString())}</span></div>${cards}</div>`;
 }
 
 function historyDirection(records) {
@@ -512,7 +572,7 @@ function render(data) {
     ? `Abweichung Messung ↔ Modell: ${data.quality.delta_kn} kn`
     : data.station.available ? 'Vergleich erst mit Modellwert möglich' : 'Vergleich erst mit Messwert möglich');
 
-  renderChart(data.model.forecast);
+  renderChart();
   renderSource(data);
   const guide = data.spot.spotguide;
   text('#local-note', [data.spot.local_note, guide?.wind_info].filter(Boolean).join(' '));
@@ -542,6 +602,7 @@ async function load(spot = state.spot) {
         data.quality = browserQuality(data.model, data.station);
       } catch (_) {}
     }
+    state.liveData = data;
     render(data);
     loadHistory(spot, data.spot);
     loadMeasurementHistory(spot);
@@ -576,6 +637,11 @@ $$('[data-history-view]').forEach(button => button.addEventListener('click', () 
   state.historyView = button.dataset.historyView;
   $$('[data-history-view]').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', String(item === button)); });
   renderHistory();
+}));
+$$('[data-forecast-view]').forEach(button => button.addEventListener('click', () => {
+  state.forecastView = button.dataset.forecastView;
+  $$('[data-forecast-view]').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', String(item === button)); });
+  renderChart();
 }));
 $('#history-prev').addEventListener('click', () => {
   const step = state.historyView === 'month' ? -1 : -12;

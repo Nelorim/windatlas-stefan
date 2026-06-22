@@ -77,8 +77,19 @@
         </div>
 
         <article class="forecast panel">
-          <div class="panel-title"><span>Nächste Stunden</span><b>Open‑Meteo Modell</b></div>
-          <div class="chart" id="forecast-chart" role="img" aria-label="Windprognose der nächsten Stunden"></div>
+          <div class="history-head">
+            <div>
+              <div class="panel-title"><span>Mögliche Zukunft</span><b>OPEN‑METEO PROGNOSE</b></div>
+              <p>Nächste Stunden bis sieben Tage · Mittelwind und maximale Böen als Modellwerte.</p>
+            </div>
+          </div>
+          <div class="timeline-tabs" role="tablist" aria-label="Zeitraum des Windverlaufs">
+            <button data-forecast-view="day" role="tab" aria-selected="false">24 Stunden</button>
+            <button data-forecast-view="three" class="active" role="tab" aria-selected="true">3 Tage</button>
+            <button data-forecast-view="week" role="tab" aria-selected="false">7 Tage</button>
+          </div>
+          <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
+          <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
         </article>
 
         <article class="kwind-live panel" id="kwind-live" hidden>
@@ -125,7 +136,6 @@
             </div>
             <a id="measured-history-source" target="_blank" rel="noopener">Quelldatei ↗</a>
           </div>
-          <div class="measurement-days" id="measurement-days" role="tablist" aria-label="Messtag"></div>
           <div class="measurement-loading" id="measurement-loading"><span class="loader"></span> Messwerte werden geladen …</div>
           <div id="measurement-content" hidden></div>
           <div class="history-error" id="measurement-error" hidden>Die gemessene Wochenhistorie ist derzeit nicht erreichbar.</div>

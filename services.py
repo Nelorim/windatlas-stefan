@@ -15,6 +15,7 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Callable
+from zoneinfo import ZoneInfo
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_METEO_ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
@@ -143,7 +144,7 @@ def get_open_meteo(spot: dict[str, Any]) -> dict[str, Any]:
                 "precipitation_probability",
             ]
         ),
-        "forecast_days": 2,
+        "forecast_days": 7,
         "timezone": "auto",
         "wind_speed_unit": "kn",
     }
@@ -157,7 +158,7 @@ def get_open_meteo(spot: dict[str, Any]) -> dict[str, Any]:
         current = raw["current"]
         hourly = raw["hourly"]
         forecast = []
-        for index, stamp in enumerate(hourly["time"][:30]):
+        for index, stamp in enumerate(hourly["time"]):
             forecast.append(
                 {
                     "time": stamp,
@@ -417,8 +418,10 @@ def get_measurement_history(spot: dict[str, Any]) -> dict[str, Any]:
         if not parsed:
             raise ValueError("MeteoSwiss recent file contains no wind observations")
         latest = max(item[0] for item in parsed)
-        start = latest - timedelta(days=7)
-        records = [record for stamp, record in parsed if start < stamp <= latest]
+        station_zone = ZoneInfo("Europe/Zurich")
+        first_local_day = latest.astimezone(station_zone).date() - timedelta(days=6)
+        start = datetime.combine(first_local_day, datetime.min.time(), tzinfo=station_zone).astimezone(timezone.utc)
+        records = [record for stamp, record in parsed if start <= stamp <= latest]
         return {
             "available": True,
             "type": "measurement",

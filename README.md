@@ -7,6 +7,12 @@ offiziellen MeteoSchweiz-10-Minuten-Messungen (Mittelwind, Böen und Richtung).
 Die lokale Kitesailing-Seite bleibt als Live-/Kurzzeitreferenz direkt am Spot
 verlinkt. Datenlücken werden niemals mit Modellwerten aufgefüllt.
 
+Die Messwoche wird ohne Tagesauswahl als durchgehende Kurve dargestellt; direkt
+an der Kurve stehen ablesbare Windwerte und darunter sieben Tageskarten mit
+Mittelwind, Richtung und Böenmaximum. Für die mögliche Zukunft gibt es getrennt
+gekennzeichnete Open-Meteo-Grafiken für 24 Stunden, die nächsten Stunden plus
+zwei Tage sowie sieben Tage.
+
 ## Was diese Version stabil macht
 
 - Die Startseite lädt **ohne Wetterabfrage**. Externe APIs können den Serverstart nicht mehr blockieren.
