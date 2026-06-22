@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 from config import SPOTS
-from services import _daily_history, _observation_age_minutes, direction_name, get_meteoswiss, kite_signal, quality_report
+from services import _daily_history, _observation_age_minutes, direction_name, get_history, get_meteoswiss, kite_signal, quality_report
 
 
 class AppTests(unittest.TestCase):
@@ -110,6 +110,21 @@ class AppTests(unittest.TestCase):
         self.assertEqual(source["wind_kn"], 9.0)
         self.assertEqual(source["gust_kn"], 14.8)
         self.assertEqual(source["direction_deg"], 239)
+
+    @patch("services._fetch_json")
+    def test_history_is_loaded_in_parallel_year_chunks(self, fetch_json):
+        fetch_json.return_value = {
+            "daily": {
+                "time": ["2026-06-20"],
+                "wind_speed_10m_max": [12],
+                "wind_gusts_10m_max": [18],
+                "wind_direction_10m_dominant": [225],
+            }
+        }
+        result = get_history(SPOTS["silvaplana"])
+        self.assertTrue(result["available"])
+        self.assertGreaterEqual(fetch_json.call_count, 5)
+        self.assertEqual(result["records"][0]["direction"], "SW")
 
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):

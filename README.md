@@ -6,7 +6,7 @@ Eine schnelle, mobile Windübersicht für ausgewählte Kite- und Foilspots in Eu
 
 - Die Startseite lädt **ohne Wetterabfrage**. Externe APIs können den Serverstart nicht mehr blockieren.
 - `/healthz` ist rein lokal und antwortet sofort.
-- Open-Meteo und MeteoSchweiz werden parallel mit einem harten 4-Sekunden-Timeout abgefragt.
+- Open-Meteo und MeteoSchweiz werden parallel abgefragt. Der Server erlaubt Open-Meteo bei einem kalten Render-Start bis zu sieben Sekunden, ohne die andere Quelle zu blockieren.
 - Servercache: 5 Minuten für Modelle, 10 Minuten für Messungen.
 - Stale-if-error: letzte gültige Modellwerte bis 6 Stunden, Messwerte bis 12 Stunden – sichtbar als veraltet markiert.
 - Browsercache als letzte Rückfallebene.
@@ -30,6 +30,8 @@ Der Qualitätswert berücksichtigt Quellenverfügbarkeit, Stationsdistanz und Ab
 Für jeden konfigurierten Spot stehen vier Ansichten bereit: **Woche**, **Monat**, **Jahr** und **5 Jahre**. Die Monatsansicht zeigt jeden Kalendertag mit Tagesmaximum, Böenspitze und – sofern vorhanden – dominanter Windrichtung. Jahres- und Fünfjahresansicht verdichten dieselben Tageswerte zu übersichtlichen Vergleichen.
 
 Die Historie stammt aus der Open-Meteo Historical Weather API. Es handelt sich um Reanalyse- beziehungsweise Modellwerte am Spot, nicht um eine lückenlose Historie lokaler Messstationen. Das wird in der Oberfläche ausdrücklich gekennzeichnet. Historische Antworten werden sechs Stunden gecacht; bei einer kurzfristigen Störung kann der letzte gültige Stand bis zu sieben Tage weiter angezeigt werden.
+
+Die fünf Kalenderjahre werden als getrennte Jahresabfragen parallel geladen. Dadurch bleibt die Antwort klein und schnell; fällt ein einzelnes Archivjahr aus, werden die übrigen Jahre angezeigt und als Teildaten gekennzeichnet, statt die gesamte Historie zu verwerfen.
 
 KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 

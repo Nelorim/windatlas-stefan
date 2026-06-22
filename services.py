@@ -147,7 +147,9 @@ def get_open_meteo(spot: dict[str, Any]) -> dict[str, Any]:
     key = f"openmeteo:{spot['lat']}:{spot['lon']}"
 
     def load() -> dict[str, Any]:
-        raw = _fetch_json(url)
+        # Render cold starts and Open-Meteo TLS setup can occasionally exceed
+        # the former four-second default although the API itself is healthy.
+        raw = _fetch_json(url, timeout=7.0)
         current = raw["current"]
         hourly = raw["hourly"]
         forecast = []
@@ -217,35 +219,56 @@ def get_history(spot: dict[str, Any]) -> dict[str, Any]:
         "timezone": "auto",
         "wind_speed_unit": "kn",
     }
-    archive_url = f"{OPEN_METEO_ARCHIVE_URL}?{urllib.parse.urlencode({**common, 'start_date': start.isoformat(), 'end_date': archive_end.isoformat()})}"
+    archive_urls = []
+    for year in range(start.year, archive_end.year + 1):
+        range_start = max(start, date(year, 1, 1))
+        range_end = min(archive_end, date(year, 12, 31))
+        archive_urls.append(
+            f"{OPEN_METEO_ARCHIVE_URL}?{urllib.parse.urlencode({**common, 'start_date': range_start.isoformat(), 'end_date': range_end.isoformat()})}"
+        )
     recent_url = f"{OPEN_METEO_URL}?{urllib.parse.urlencode({**common, 'past_days': 7, 'forecast_days': 1})}"
     key = f"history:{spot['lat']}:{spot['lon']}:{today.isoformat()}"
 
     def load() -> dict[str, Any]:
-        pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="history-source")
-        archive_future = pool.submit(_fetch_json, archive_url, 12.0)
+        pool = ThreadPoolExecutor(max_workers=len(archive_urls) + 1, thread_name_prefix="history-source")
+        archive_futures = [pool.submit(_fetch_json, item, 10.0) for item in archive_urls]
         recent_future = pool.submit(_fetch_json, recent_url, 8.0)
-        done, _ = wait([archive_future, recent_future], timeout=13.0)
-        if archive_future not in done:
-            pool.shutdown(wait=False, cancel_futures=True)
-            raise TimeoutError("historical archive timeout")
-        records = {item["date"]: item for item in _daily_history(archive_future.result())}
+        done, _ = wait([*archive_futures, recent_future], timeout=11.0)
+        records = {}
+        successful_archives = 0
+        for future in archive_futures:
+            if future not in done:
+                continue
+            try:
+                for item in _daily_history(future.result()):
+                    records[item["date"]] = item
+                successful_archives += 1
+            except (OSError, ValueError, KeyError, json.JSONDecodeError, urllib.error.URLError):
+                continue
         if recent_future in done:
-            for item in _daily_history(recent_future.result()):
-                records[item["date"]] = item
+            try:
+                for item in _daily_history(recent_future.result()):
+                    records[item["date"]] = item
+            except (OSError, ValueError, KeyError, json.JSONDecodeError, urllib.error.URLError):
+                pass
         pool.shutdown(wait=False, cancel_futures=True)
+        if not records:
+            raise ValueError("historical archive unavailable")
         ordered = [records[key] for key in sorted(records) if start.isoformat() <= key <= today.isoformat()]
-        return {
+        result = {
             "available": True,
             "type": "reanalysis",
             "provider": "Open-Meteo Historical Weather",
-            "source_url": archive_url,
+            "source_url": "https://open-meteo.com/en/docs/historical-weather-api",
             "method": "Tägliche Reanalyse/Modellrekonstruktion, keine lückenlose Stationsmessung",
             "start_date": start.isoformat(),
             "end_date": today.isoformat(),
             "fetched_at": _iso_now(),
             "records": ordered,
         }
+        if successful_archives < len(archive_urls):
+            result["warning"] = f"Teildaten: {successful_archives} von {len(archive_urls)} Archivjahren geladen."
+        return result
 
     return _cached_fetch(key, ttl=21_600, stale_for=604_800, loader=load)
 
@@ -433,7 +456,7 @@ def build_payload(spot_id: str, spot: dict[str, Any]) -> dict[str, Any]:
     pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="wind-source")
     model_future = pool.submit(get_open_meteo, spot)
     station_future = pool.submit(get_meteoswiss, spot)
-    done, _ = wait([model_future, station_future], timeout=5.0)
+    done, _ = wait([model_future, station_future], timeout=8.0)
 
     def completed(future, provider: str) -> dict[str, Any]:
         if future not in done:

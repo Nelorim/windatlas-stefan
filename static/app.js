@@ -298,7 +298,7 @@ async function load(spot = state.spot) {
   state.spot = spot;
   state.controller?.abort();
   state.controller = new AbortController();
-  const timeout = setTimeout(() => state.controller.abort(), 9000);
+  const timeout = setTimeout(() => state.controller.abort(), 12000);
   $('#dashboard').setAttribute('aria-busy', 'true');
   $('#loading').hidden = false;
   $('#content').hidden = true;
