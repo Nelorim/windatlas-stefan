@@ -27,6 +27,115 @@ function compass(degrees) {
   return names[Math.round(degrees / 22.5) % 16];
 }
 
+function browserQuality(model, station) {
+  let score = model.available ? 30 : 0;
+  const reasons = [];
+  let delta = null;
+  if (station.available && Number.isFinite(station.wind_kn)) {
+    score += 35;
+    const distance = station.distance_km ?? 999;
+    let ceiling;
+    if (distance <= 1) { score += 15; ceiling = 100; reasons.push('Messstation liegt direkt am Spot'); }
+    else if (distance <= 5) { score += 12; ceiling = 95; reasons.push('Messstation liegt sehr nahe am Spot'); }
+    else if (distance <= 15) { score += 5; ceiling = 80; reasons.push('Messstation ist eine regionale Referenz'); }
+    else if (distance <= 30) { score += 2; ceiling = 72; reasons.push('Messstation ist nur regional repräsentativ'); }
+    else { ceiling = 65; reasons.push('Messstation ist weit entfernt'); }
+    const age = station.observation_age_minutes;
+    if (Number.isFinite(age) && age <= 20) { score += 10; reasons.push('Messung ist höchstens 20 Minuten alt'); }
+    else if (Number.isFinite(age) && age <= 40) { score += 5; ceiling = Math.min(ceiling, 90); reasons.push('Messung ist leicht verzögert'); }
+    else if (Number.isFinite(age)) { ceiling = Math.min(ceiling, 70); reasons.push('Messung ist älter als 40 Minuten'); }
+    else reasons.push('Messalter ist nicht eindeutig bestimmbar');
+    if (station.quality_flags?.length) { ceiling = Math.min(ceiling, 70); reasons.push('Stationswert hat einen Plausibilitätswarnhinweis'); }
+    if (Number.isFinite(model.wind_kn)) {
+      delta = Math.round(Math.abs(station.wind_kn - model.wind_kn) * 10) / 10;
+      if (delta <= 3) { score += 10; reasons.push('Messung und Modell stimmen gut überein'); }
+      else if (delta <= 6) { score += 5; reasons.push('Messung und Modell weichen moderat ab'); }
+      else reasons.push('Messung und Modell weichen stark ab');
+    }
+    score = Math.min(score, ceiling);
+    if (ceiling < 100) reasons.push(`Qualität wegen Messdistanz auf ${ceiling}/100 begrenzt`);
+  } else reasons.push('Keine aktuelle Stationsmessung verfügbar');
+  score = Math.min(score, 100);
+  return { score, label: score >= 80 ? 'hoch' : score >= 55 ? 'mittel' : 'begrenzt', delta_kn: delta, reasons };
+}
+
+async function fetchBrowserModel(spot, signal) {
+  const params = new URLSearchParams({
+    latitude: spot.lat, longitude: spot.lon,
+    current: 'temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code,cloud_cover',
+    hourly: 'wind_speed_10m,wind_direction_10m,wind_gusts_10m,temperature_2m,precipitation_probability',
+    forecast_days: '2', timezone: 'auto', wind_speed_unit: 'kn',
+  });
+  const url = `https://api.open-meteo.com/v1/forecast?${params}`;
+  const response = await fetch(url, { signal });
+  if (!response.ok) throw new Error(`Open-Meteo HTTP ${response.status}`);
+  const raw = await response.json();
+  const current = raw.current;
+  const hourly = raw.hourly;
+  const forecast = (hourly.time || []).map((time, index) => ({
+    time,
+    wind_kn: hourly.wind_speed_10m?.[index] ?? null,
+    gust_kn: hourly.wind_gusts_10m?.[index] ?? null,
+    direction_deg: hourly.wind_direction_10m?.[index] ?? null,
+    temperature_c: hourly.temperature_2m?.[index] ?? null,
+    rain_probability: hourly.precipitation_probability?.[index] ?? null,
+  }));
+  return {
+    available: true, type: 'model', provider: 'Open-Meteo Browser-Fallback', source_url: url,
+    observed_at: current.time, fetched_at: new Date().toISOString(), cache_status: 'browser',
+    wind_kn: current.wind_speed_10m, gust_kn: current.wind_gusts_10m,
+    direction_deg: current.wind_direction_10m, direction: compass(current.wind_direction_10m),
+    temperature_c: current.temperature_2m, cloud_cover: current.cloud_cover,
+    forecast, method: 'Direkter Browser-Fallback; Modellwert, keine Messung',
+  };
+}
+
+function dailyOpenMeteo(raw) {
+  const daily = raw.daily || {};
+  return (daily.time || []).map((date, index) => {
+    const direction = daily.wind_direction_10m_dominant?.[index] ?? null;
+    return {
+      date, wind_kn: daily.wind_speed_10m_max?.[index] ?? null,
+      gust_kn: daily.wind_gusts_10m_max?.[index] ?? null,
+      direction_deg: direction, direction: Number.isFinite(direction) ? compass(direction) : null,
+    };
+  });
+}
+
+async function fetchBrowserHistory(spot, signal) {
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const archiveEnd = new Date(today); archiveEnd.setDate(today.getDate() - 3);
+  const format = date => date.toISOString().slice(0, 10);
+  const requests = [];
+  for (let year = currentYear - 4; year <= currentYear; year += 1) {
+    const start = new Date(Date.UTC(year, 0, 1));
+    const end = new Date(Math.min(Date.UTC(year, 11, 31), archiveEnd.getTime()));
+    if (start > end) continue;
+    const params = new URLSearchParams({
+      latitude: spot.lat, longitude: spot.lon,
+      daily: 'wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant',
+      timezone: 'auto', wind_speed_unit: 'kn', start_date: format(start), end_date: format(end),
+    });
+    requests.push(fetch(`https://archive-api.open-meteo.com/v1/archive?${params}`, { signal }).then(response => {
+      if (!response.ok) throw new Error(`Archive HTTP ${response.status}`);
+      return response.json();
+    }));
+  }
+  const settled = await Promise.allSettled(requests);
+  const records = {};
+  settled.forEach(result => {
+    if (result.status === 'fulfilled') dailyOpenMeteo(result.value).forEach(item => { records[item.date] = item; });
+  });
+  if (!Object.keys(records).length) throw new Error('Browser history unavailable');
+  return {
+    available: true, provider: 'Open-Meteo Browser-Fallback',
+    source_url: 'https://open-meteo.com/en/docs/historical-weather-api',
+    records: Object.values(records).sort((a, b) => a.date.localeCompare(b.date)),
+    warning: settled.some(result => result.status === 'rejected') ? 'Einzelne Archivjahre sind derzeit nicht erreichbar.' : null,
+  };
+}
+
 function renderChart(forecast = []) {
   const chart = $('#forecast-chart');
   const now = Date.now() - 60 * 60 * 1000;
@@ -116,7 +225,7 @@ function renderHistory() {
     : renderHistoryFive(records);
   content.hidden = false;
 }
-async function loadHistory(spot) {
+async function loadHistory(spot, spotMeta) {
   state.historyController?.abort();
   state.historyController = new AbortController();
   state.historyData = null;
@@ -124,12 +233,17 @@ async function loadHistory(spot) {
   $('#history-loading').hidden = false;
   $('#history-content').hidden = true;
   $('#history-error').hidden = true;
-  const timeout = setTimeout(() => state.historyController.abort(), 16000);
+  const timeout = setTimeout(() => state.historyController.abort(), 30000);
   try {
-    const response = await fetch(`/api/v1/history/${encodeURIComponent(spot)}`, { signal: state.historyController.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    if (!data.available) throw new Error('history unavailable');
+    let data;
+    try {
+      const response = await fetch(`/api/v1/history/${encodeURIComponent(spot)}`, { signal: state.historyController.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      data = await response.json();
+      if (!data.available) throw new Error('history unavailable');
+    } catch (_) {
+      data = await fetchBrowserHistory(spotMeta, state.historyController.signal);
+    }
     state.historyData = data;
     $('#history-source').href = data.source_url;
     renderHistory();
@@ -281,7 +395,9 @@ function render(data) {
   text('#quality-label', data.quality.label);
   $('#quality-bar').style.width = `${data.quality.score}%`;
   $('#quality-reasons').innerHTML = data.quality.reasons.map(reason => `<li>${reason}</li>`).join('');
-  text('#model-delta', Number.isFinite(data.quality.delta_kn) ? `Abweichung Messung ↔ Modell: ${data.quality.delta_kn} kn` : 'Vergleich erst mit Messwert möglich');
+  text('#model-delta', Number.isFinite(data.quality.delta_kn)
+    ? `Abweichung Messung ↔ Modell: ${data.quality.delta_kn} kn`
+    : data.station.available ? 'Vergleich erst mit Modellwert möglich' : 'Vergleich erst mit Messwert möglich');
 
   renderChart(data.model.forecast);
   renderSource(data);
@@ -298,7 +414,7 @@ async function load(spot = state.spot) {
   state.spot = spot;
   state.controller?.abort();
   state.controller = new AbortController();
-  const timeout = setTimeout(() => state.controller.abort(), 12000);
+  const timeout = setTimeout(() => state.controller.abort(), 15000);
   $('#dashboard').setAttribute('aria-busy', 'true');
   $('#loading').hidden = false;
   $('#content').hidden = true;
@@ -307,8 +423,14 @@ async function load(spot = state.spot) {
     const response = await fetch(`/api/v1/wind/${encodeURIComponent(spot)}`, { signal: state.controller.signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
+    if (!data.model.available) {
+      try {
+        data.model = await fetchBrowserModel(data.spot, state.controller.signal);
+        data.quality = browserQuality(data.model, data.station);
+      } catch (_) {}
+    }
     render(data);
-    loadHistory(spot);
+    loadHistory(spot, data.spot);
     try { localStorage.setItem(`windatlas:${spot}`, JSON.stringify({ at: Date.now(), data })); } catch (_) {}
     $('#content').hidden = false;
   } catch (error) {

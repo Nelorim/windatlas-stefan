@@ -19,8 +19,10 @@ def create_app() -> Flask:
     def response_headers(response):
         if response.content_type.startswith("text/html"):
             response.headers["Cache-Control"] = "public, max-age=60"
-        elif response.content_type.startswith(("text/css", "application/javascript")):
-            response.headers["Cache-Control"] = "public, max-age=86400"
+        elif response.content_type.startswith(("text/css", "text/javascript", "application/javascript")):
+            # Assets are not content-hashed yet. Revalidate so a deployment can
+            # never leave clients running yesterday's JavaScript for 24 hours.
+            response.headers["Cache-Control"] = "no-cache, max-age=0, must-revalidate"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response

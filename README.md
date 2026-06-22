@@ -33,6 +33,8 @@ Die Historie stammt aus der Open-Meteo Historical Weather API. Es handelt sich u
 
 Die fünf Kalenderjahre werden als getrennte Jahresabfragen parallel geladen. Dadurch bleibt die Antwort klein und schnell; fällt ein einzelnes Archivjahr aus, werden die übrigen Jahre angezeigt und als Teildaten gekennzeichnet, statt die gesamte Historie zu verwerfen.
 
+Falls Open-Meteo Anfragen von der gemeinsam genutzten Render-Ausgangsadresse mit einem HTTP-Fehler ablehnt, fragt der Browser des Besuchers dieselben kostenlosen öffentlichen Endpunkte direkt ab. Dieser CORS-Fallback stellt Live-Prognose und Jahresarchive wieder her, ohne API-Schlüssel, kostenpflichtige Dienste oder Weitergabe persönlicher Zugangsdaten.
+
 KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 
 Für Silvaplana wird die frei verfügbare MeteoSchweiz-Station Segl-Maria (`SIA`) direkt aus der offiziellen 10-Minuten-CSV gelesen. Sie liegt rund 4,1 km vom Spot entfernt und ersetzt Samedan als Hauptreferenz. Windmittel, Böe, Richtung, Messzeit und Plausibilitätsstatus werden normalisiert; ein veralteter oder inkonsistenter Wert wird im Qualitätswert deutlich begrenzt.

@@ -28,6 +28,12 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"WindAtlas", response.data)
         self.assertIn(b"MeteoSchweiz", response.data)
 
+    def test_javascript_is_revalidated_after_deploy(self):
+        response = self.client.get("/static/app.js")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("no-cache", response.headers["Cache-Control"])
+        response.close()
+
     def test_unknown_spot_is_404(self):
         response = self.client.get("/api/v1/wind/atlantis")
         self.assertEqual(response.status_code, 404)
