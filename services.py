@@ -93,6 +93,18 @@ def _number(value: Any) -> float | None:
         return None
 
 
+def _timestamp_with_offset(stamp: str, offset_seconds: int | float | None) -> str:
+    """Attach Open-Meteo's numeric UTC offset to its local ISO timestamp."""
+    if stamp.endswith("Z") or "+" in stamp[10:] or "-" in stamp[10:]:
+        return stamp
+    seconds = int(offset_seconds or 0)
+    sign = "+" if seconds >= 0 else "-"
+    seconds = abs(seconds)
+    hours, remainder = divmod(seconds, 3600)
+    minutes = remainder // 60
+    return f"{stamp}{sign}{hours:02d}:{minutes:02d}"
+
+
 def _cached_fetch(
     key: str,
     ttl: int,
@@ -157,11 +169,12 @@ def get_open_meteo(spot: dict[str, Any]) -> dict[str, Any]:
         raw = _fetch_json(url, timeout=7.0)
         current = raw["current"]
         hourly = raw["hourly"]
+        offset = raw.get("utc_offset_seconds", 0)
         forecast = []
         for index, stamp in enumerate(hourly["time"]):
             forecast.append(
                 {
-                    "time": stamp,
+                    "time": _timestamp_with_offset(stamp, offset),
                     "wind_kn": _number(hourly["wind_speed_10m"][index]),
                     "gust_kn": _number(hourly["wind_gusts_10m"][index]),
                     "direction_deg": _number(hourly["wind_direction_10m"][index]),
@@ -174,7 +187,9 @@ def get_open_meteo(spot: dict[str, Any]) -> dict[str, Any]:
             "type": "model",
             "provider": "Open-Meteo",
             "source_url": url,
-            "observed_at": current["time"],
+            "observed_at": _timestamp_with_offset(current["time"], offset),
+            "timezone": raw.get("timezone", "UTC"),
+            "utc_offset_seconds": offset,
             "fetched_at": _iso_now(),
             "wind_kn": _number(current["wind_speed_10m"]),
             "gust_kn": _number(current["wind_gusts_10m"]),

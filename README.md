@@ -13,6 +13,11 @@ Mittelwind, Richtung und Böenmaximum. Für die mögliche Zukunft gibt es getren
 gekennzeichnete Open-Meteo-Grafiken für 24 Stunden, die nächsten Stunden plus
 zwei Tage sowie sieben Tage.
 
+Alle Kurvenbeschriftungen kombinieren nun lokale Spot-Uhrzeit und Windwert.
+Tageskarten und die gemessene Wochenkurve weisen das Böenmaximum zusätzlich mit
+Uhrzeit aus. Die Prognosegrafik wird bei sämtlichen konfigurierten Spots geladen;
+eine gemessene Historie erscheint nur bei tatsächlich angebundener Messstation.
+
 ## Was diese Version stabil macht
 
 - Die Startseite lädt **ohne Wetterabfrage**. Externe APIs können den Serverstart nicht mehr blockieren.

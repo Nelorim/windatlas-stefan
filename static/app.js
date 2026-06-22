@@ -16,10 +16,26 @@ const state = {
 
 function text(selector, value) { $(selector).textContent = value ?? '–'; }
 function value(value, suffix = '') { return Number.isFinite(value) ? `${value}${suffix}` : '–'; }
-function dateTime(raw) {
+function dateTime(raw, timeZone = null) {
   if (!raw) return 'Unbekannt';
   const parsed = new Date(raw);
-  return Number.isNaN(parsed.getTime()) ? raw : new Intl.DateTimeFormat('de-CH', { dateStyle: 'short', timeStyle: 'short' }).format(parsed);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  try { return new Intl.DateTimeFormat('de-CH', { dateStyle: 'short', timeStyle: 'short', ...(timeZone ? { timeZone } : {}) }).format(parsed); }
+  catch (_) { return new Intl.DateTimeFormat('de-CH', { dateStyle: 'short', timeStyle: 'short' }).format(parsed); }
+}
+function timeLabel(raw, timeZone = null) {
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return '–';
+  try { return new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit', ...(timeZone ? { timeZone } : {}) }).format(parsed); }
+  catch (_) { return new Intl.DateTimeFormat('de-CH', { hour: '2-digit', minute: '2-digit' }).format(parsed); }
+}
+function isoWithOffset(raw, offsetSeconds = 0) {
+  if (!raw || /(?:Z|[+-]\d\d:\d\d)$/.test(raw)) return raw;
+  const sign = offsetSeconds >= 0 ? '+' : '-';
+  const absolute = Math.abs(offsetSeconds);
+  const hours = String(Math.floor(absolute / 3600)).padStart(2, '0');
+  const minutes = String(Math.floor((absolute % 3600) / 60)).padStart(2, '0');
+  return `${raw}${sign}${hours}:${minutes}`;
 }
 function cacheLabel(source) {
   if (!source.available) return 'Nicht verfügbar';
@@ -32,8 +48,8 @@ function compass(degrees) {
   return names[Math.round(degrees / 22.5) % 16];
 }
 
-function localDayKey(raw) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(raw));
+function localDayKey(raw, timeZone = 'Europe/Zurich') {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(raw));
   const get = type => parts.find(item => item.type === type)?.value;
   return `${get('year')}-${get('month')}-${get('day')}`;
 }
@@ -75,19 +91,21 @@ function renderMeasurementHistory() {
   const gusts = records.map(item => item.gust_kn).filter(Number.isFinite);
   const direction = circularDirection(records);
   const maxValue = Math.max(10, ...winds, ...gusts);
+  const weeklyPeak = records.filter(item => Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0];
   const start = new Date(records[0].time).getTime();
   const end = new Date(records.at(-1).time).getTime();
   const days = [...new Set(records.map(item => localDayKey(item.time)))].sort();
   const dayCards = days.map(day => {
     const items = records.filter(item => localDayKey(item.time) === day);
     const dir = circularDirection(items);
+    const peak = items.filter(item => Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0];
     const label = new Date(`${day}T12:00:00`).toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
-    return `<div class="measurement-hour"><b>${label}</b><strong>${value(average(items, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(dir) ? `${compass(dir)} · ${dir}°` : 'Richtung –'}</span><small>Maximum ${value(maximum(items, 'gust_kn'), ' kn')} · ${items.length} Werte</small></div>`;
+    return `<div class="measurement-hour"><b>${label}</b><strong>${value(average(items, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(dir) ? `${compass(dir)} · ${dir}°` : 'Richtung –'}</span><small>Maximum ${value(peak?.gust_kn, ' kn')} um ${peak ? timeLabel(peak.time, 'Europe/Zurich') : '–'} · ${items.length} Werte</small></div>`;
   }).join('');
   $('#measurement-content').innerHTML = `
     <div class="measurement-summary">
       <div><span>Ø Mittelwind · 7 Tage</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><small>aus 10-Minuten-Werten</small></div>
-      <div><span>Stärkste Böe</span><strong>${value(maximum(records, 'gust_kn'), ' kn')}</strong><small>Wochenmaximum</small></div>
+      <div><span>Stärkste Böe</span><strong>${value(weeklyPeak?.gust_kn, ' kn')}</strong><small>${weeklyPeak ? `Wochenmaximum um ${timeLabel(weeklyPeak.time, 'Europe/Zurich')}` : 'nicht verfügbar'}</small></div>
       <div><span>Mittlere Richtung</span><strong>${Number.isFinite(direction) ? compass(direction) : '–'}</strong><small>${Number.isFinite(direction) ? `${direction}°` : 'nicht verfügbar'}</small></div>
       <div><span>Messabdeckung</span><strong>${records.length}</strong><small>unveränderte Messpunkte</small></div>
     </div>
@@ -96,7 +114,8 @@ function renderMeasurementHistory() {
       <svg viewBox="0 0 1000 220" role="img" aria-label="Gemessener Windverlauf der letzten sieben Tage">
         <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
         ${timelineLines(records, 'gust_kn', start, end, maxValue, 'gust-line', 21)}${timelineLines(records, 'wind_kn', start, end, maxValue, 'wind-line', 21)}
-        ${timelineLabels(records, 'wind_kn', start, end, maxValue, 36, 'measured', 15)}
+        ${timelineLabels(records, 'wind_kn', start, end, maxValue, 72, 'measured', 15, 'Europe/Zurich')}
+        ${peakLabelsByDay(records, start, end, maxValue, 'Europe/Zurich')}
       </svg>
       <div class="timeline-axis"><span>${dateTime(records[0].time)}</span><b>7 Tage gemessen</b><span>${dateTime(records.at(-1).time)}</span></div>
       <div class="measurement-hours">${dayCards}</div>
@@ -180,8 +199,9 @@ async function fetchBrowserModel(spot, signal) {
   const raw = await response.json();
   const current = raw.current;
   const hourly = raw.hourly;
+  const offset = raw.utc_offset_seconds || 0;
   const forecast = (hourly.time || []).map((time, index) => ({
-    time,
+    time: isoWithOffset(time, offset),
     wind_kn: hourly.wind_speed_10m?.[index] ?? null,
     gust_kn: hourly.wind_gusts_10m?.[index] ?? null,
     direction_deg: hourly.wind_direction_10m?.[index] ?? null,
@@ -190,7 +210,8 @@ async function fetchBrowserModel(spot, signal) {
   }));
   return {
     available: true, type: 'model', provider: 'Open-Meteo Browser-Fallback', source_url: url,
-    observed_at: current.time, fetched_at: new Date().toISOString(), cache_status: 'browser',
+    observed_at: isoWithOffset(current.time, offset), fetched_at: new Date().toISOString(), cache_status: 'browser',
+    timezone: raw.timezone || 'UTC', utc_offset_seconds: offset,
     wind_kn: current.wind_speed_10m, gust_kn: current.wind_gusts_10m,
     direction_deg: current.wind_direction_10m, direction: compass(current.wind_direction_10m),
     temperature_c: current.temperature_2m, cloud_cover: current.cloud_cover,
@@ -266,7 +287,7 @@ function timelineLines(records, key, start, end, maxValue, className, gapMinutes
   return groups.map(points => `<polyline class="${className}" points="${points.join(' ')}"/>`).join('');
 }
 
-function timelineLabels(records, key, start, end, maxValue, every, dotType = '', offsetY = -10) {
+function timelineLabels(records, key, start, end, maxValue, every, dotType = '', offsetY = -10, timeZone = null) {
   const width = 1000; const height = 205; const duration = end - start;
   return records.filter((item, index) => index % every === 0 && Number.isFinite(item[key])).map(item => {
     const time = new Date(item.time).getTime();
@@ -274,36 +295,53 @@ function timelineLabels(records, key, start, end, maxValue, every, dotType = '',
     const x = (time - start) / duration * width;
     const y = height - item[key] / maxValue * (height - 14);
     const labelY = Math.max(12, y + offsetY);
-    return `<circle class="timeline-dot ${dotType}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"><title>${dateTime(item.time)} · ${item[key]} kn</title></circle><text class="timeline-value" x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle">${item[key]}</text>`;
+    const label = `${timeLabel(item.time, timeZone)} · ${item[key]}`;
+    return `<circle class="timeline-dot ${dotType}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5"><title>${dateTime(item.time, timeZone)} · ${item[key]} kn</title></circle><text class="timeline-value" x="${x.toFixed(1)}" y="${labelY.toFixed(1)}" text-anchor="middle">${label}</text>`;
   }).join('');
 }
 
-function timelineDayCards(forecast, start, end) {
+function peakLabelsByDay(records, start, end, maxValue, timeZone) {
+  const keys = [...new Set(records.map(item => localDayKey(item.time, timeZone)))];
+  const peaks = keys.map(key => records.filter(item => localDayKey(item.time, timeZone) === key && Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0]).filter(Boolean);
+  const width = 1000; const height = 205; const duration = end - start;
+  return peaks.map(item => {
+    const time = new Date(item.time).getTime();
+    if (time < start || time > end) return '';
+    const x = (time - start) / duration * width;
+    const y = height - item.gust_kn / maxValue * (height - 14);
+    const label = `Max ${timeLabel(item.time, timeZone)} · ${item.gust_kn}`;
+    return `<circle class="timeline-dot gust" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4"><title>${dateTime(item.time, timeZone)} · Böe ${item.gust_kn} kn</title></circle><text class="timeline-value max-gust" x="${x.toFixed(1)}" y="${Math.max(12, y - 11).toFixed(1)}" text-anchor="middle">${label}</text>`;
+  }).join('');
+}
+
+function timelineDayCards(forecast, start, end, timeZone) {
   const cards = [];
-  for (let cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
-    const key = localDayKey(cursor.toISOString());
-    const records = forecast.filter(item => localDayKey(item.time) === key);
-    if (!records.length) continue;
+  const keys = [...new Set(forecast.filter(item => { const stamp = new Date(item.time).getTime(); return stamp >= start && stamp <= end; }).map(item => localDayKey(item.time, timeZone)))];
+  keys.forEach(key => {
+    const records = forecast.filter(item => localDayKey(item.time, timeZone) === key);
+    if (!records.length) return;
     const direction = circularDirection(records);
-    const label = cursor.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' });
-    cards.push(`<div class="timeline-day"><b>${label}</b><span class="type">PROGNOSE</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(direction) ? `${compass(direction)} · ${direction}°` : 'Richtung –'}</span><small>Maximum ${value(maximum(records, 'gust_kn'), ' kn')}</small></div>`);
-  }
+    const peak = records.filter(item => Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0];
+    const label = new Intl.DateTimeFormat('de-CH', { timeZone, weekday: 'short', day: '2-digit', month: '2-digit' }).format(new Date(records[0].time));
+    cards.push(`<div class="timeline-day"><b>${label}</b><span class="type">PROGNOSE</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(direction) ? `${compass(direction)} · ${direction}°` : 'Richtung –'}</span><small>Maximum ${value(peak?.gust_kn, ' kn')} um ${peak ? timeLabel(peak.time, timeZone) : '–'}</small></div>`);
+  });
   return cards.join('');
 }
 
 function renderChart() {
   const chart = $('#forecast-chart');
   const forecast = (state.liveData?.model?.forecast || []).filter(item => new Date(item.time).getTime() >= Date.now() - 60 * 60 * 1000);
+  const timeZone = state.liveData?.model?.timezone || 'UTC';
   const now = Date.now();
   const days = state.forecastView === 'week' ? 7 : state.forecastView === 'three' ? 3 : 1;
   const start = now - 60 * 60 * 1000;
   let end;
   if (state.forecastView === 'day') end = now + 24 * 60 * 60 * 1000;
   else {
-    const finalDay = new Date(now);
-    finalDay.setDate(finalDay.getDate() + days - 1);
-    finalDay.setHours(23, 59, 59, 999);
-    end = finalDay.getTime();
+    const forecastDays = [...new Set(forecast.filter(item => new Date(item.time).getTime() >= now).map(item => localDayKey(item.time, timeZone)))];
+    const finalKey = forecastDays[Math.min(days, forecastDays.length) - 1];
+    const finalRecords = forecast.filter(item => localDayKey(item.time, timeZone) === finalKey);
+    end = finalRecords.length ? Math.max(...finalRecords.map(item => new Date(item.time).getTime())) : now + days * 24 * 60 * 60 * 1000;
   }
   const visible = forecast.filter(item => { const time = new Date(item.time).getTime(); return time >= start && time <= end; });
   if (!visible.length) {
@@ -313,14 +351,14 @@ function renderChart() {
   const maxValue = Math.max(10, ...visible.flatMap(item => [item.wind_kn, item.gust_kn]).filter(Number.isFinite));
   const labelEvery = state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12;
   const minWidth = state.forecastView === 'day' ? 760 : state.forecastView === 'three' ? 1250 : 1700;
-  const cards = `<div class="timeline-days">${timelineDayCards(forecast, new Date(start), new Date(end))}</div>`;
+  const cards = `<div class="timeline-days">${timelineDayCards(forecast, start, end, timeZone)}</div>`;
   chart.innerHTML = `<div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
     <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
     ${timelineLines(forecast, 'gust_kn', start, end, maxValue, 'forecast-gust', 91)}
     ${timelineLines(forecast, 'wind_kn', start, end, maxValue, 'forecast-wind', 91)}
-    ${timelineLabels(forecast, 'gust_kn', start, end, maxValue, labelEvery, 'gust', -12)}
-    ${timelineLabels(forecast, 'wind_kn', start, end, maxValue, labelEvery, 'forecast', 17)}
-    </svg><div class="timeline-axis"><span>Jetzt</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString())}</span></div>${cards}</div>`;
+    ${timelineLabels(forecast, 'gust_kn', start, end, maxValue, labelEvery, 'gust', -12, timeZone)}
+    ${timelineLabels(forecast, 'wind_kn', start, end, maxValue, labelEvery, 'forecast', 17, timeZone)}
+    </svg><div class="timeline-axis"><span>Jetzt · ${timeLabel(new Date(now).toISOString(), timeZone)}</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString(), timeZone)}</span></div>${cards}</div>`;
 }
 
 function historyDirection(records) {

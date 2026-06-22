@@ -8,7 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 from config import SPOTS
-from services import _daily_history, _observation_age_minutes, direction_name, get_history, get_measurement_history, get_meteoswiss, get_open_meteo, kite_signal, quality_report
+from services import _daily_history, _observation_age_minutes, _timestamp_with_offset, direction_name, get_history, get_measurement_history, get_meteoswiss, get_open_meteo, kite_signal, quality_report
 
 
 class AppTests(unittest.TestCase):
@@ -191,6 +191,10 @@ class AppTests(unittest.TestCase):
 
 
 class QualityTests(unittest.TestCase):
+    def test_spot_local_utc_offset_is_attached(self):
+        self.assertEqual(_timestamp_with_offset("2026-06-22T21:00", 10_800), "2026-06-22T21:00+03:00")
+        self.assertEqual(_timestamp_with_offset("2026-06-22T18:00", -18_000), "2026-06-22T18:00-05:00")
+
     def test_meteoswiss_timestamp_age_is_parsed(self):
         self.assertIsNotNone(_observation_age_minutes("22.06.2026 12:30"))
 
