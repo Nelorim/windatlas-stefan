@@ -19,6 +19,7 @@ Eine schnelle, mobile Windübersicht für ausgewählte Kite- und Foilspots in Eu
 | MeteoSchweiz SwissMetNet | echte automatische Stationsmessung | 10 Minuten |
 | Open-Meteo | Wettermodell am Spot, keine Messung | typischerweise 1–6 Stunden je Modell |
 | KWind | externes Live-Stationsnetz; Suche wird direkt geöffnet | abhängig von lokaler Station |
+| Windguru Live Wind | verlinkte nahe Messstationen mit geprüfter Distanz; keine kopierten Rohwerte | abhängig von der Station |
 | Kiteschulen / Clubs | öffentlich geprüfter lokaler Kontext | redaktionelles Prüfdatum |
 
 Der Qualitätswert berücksichtigt Quellenverfügbarkeit, Stationsdistanz und Abweichung zwischen Messung und Modell. Er ist transparent und bewusst konservativ. Die Kite-Ampel ist nur eine Entscheidungshilfe, niemals eine Sicherheitsfreigabe.
@@ -34,6 +35,10 @@ KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verli
 Für Silvaplana ist zusätzlich die vom Nutzer bereitgestellte feste KWind-Station `670cd9f112daffeffb13a8a0` über das offizielle KWind-Widget eingebunden. Livewerte und Messhistorie bleiben dabei technisch bei KWind. MeteoSchweiz Samedan wird nur als regionale Referenz behandelt und kann wegen der Distanz keine Datenqualität von 100/100 mehr erzeugen.
 
 Mui Ne (Vietnam) ist als weiterer Spot enthalten. Die lokale Quelle ist die C2Sky-Webcamseite mit eingebundener Windguru-Livestation `14164`; Open-Meteo bleibt als klar gekennzeichneter Modellvergleich bestehen.
+
+KB-Zone und Selena Bay verwenden zusätzlich die feste, vom Nutzer zugeordnete KWind-Station `64f17bf1779ccbba6bfef479`. Liveansicht und Messhistorie werden über das offizielle KWind-Widget beziehungsweise direkte KWind-Links geöffnet; WindAtlas speichert keine KWind-Rohdaten.
+
+Windguru Live Wind ist zusätzlich für Malcesine, Jambiani, Berlingen, KB-Zone, Selena Bay und Mui Ne verknüpft. Angezeigt werden nur redaktionell bestätigte Stationsnamen und Distanzen. Bei Colico und Silvaplana wurden nahe Bergstationen bewusst nicht als Spotmessung übernommen; für Viana, Loissin, Sulawesi und Softades fehlt derzeit eine ausreichend eindeutig bestätigte nahe Windguru-Messstation. Externe Windguru-Werte erhöhen den WindAtlas-Qualitätswert nicht automatisch.
 
 Offizielle Dokumentation:
 

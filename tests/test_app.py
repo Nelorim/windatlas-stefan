@@ -49,9 +49,38 @@ class AppTests(unittest.TestCase):
         self.assertEqual(kwind["station_id"], "670cd9f112daffeffb13a8a0")
         self.assertIn("windhistory", kwind["history_url"])
 
+    def test_silvaplana_uses_current_kitesailing_weather_page(self):
+        source = SPOTS["silvaplana"]["school"]
+        self.assertTrue(source["url"].endswith("/spot/wetter-wassersport"))
+        self.assertIn("Windrichtung", source["kind"])
+
     def test_mui_ne_uses_c2sky_live_page(self):
         self.assertIn("c2skykitecenter.com", SPOTS["mui-ne"]["school"]["url"])
         self.assertIn("14164", SPOTS["mui-ne"]["school"]["kind"])
+
+    def test_hurghada_spots_share_fixed_kwind_station(self):
+        kb_station = SPOTS["kb-zone"]["kwind"]
+        selena_station = SPOTS["selena-bay"]["kwind"]
+        self.assertEqual(kb_station["station_id"], "64f17bf1779ccbba6bfef479")
+        self.assertEqual(selena_station["station_id"], kb_station["station_id"])
+        self.assertIn("windhistory", kb_station["history_url"])
+
+    def test_windguru_links_only_have_verified_station_distances(self):
+        linked = {spot_id: spot["windguru"] for spot_id, spot in SPOTS.items() if spot.get("windguru")}
+        self.assertEqual(set(linked), {"malcesine", "jambiani", "berlingen", "kb-zone", "selena-bay", "mui-ne"})
+        for source in linked.values():
+            self.assertTrue(source["url"].startswith("https://www.windguru.cz/"))
+            self.assertTrue(source["stations"])
+            self.assertTrue(all(item["distance_km"] >= 0 for item in source["stations"]))
+
+    def test_mui_ne_windguru_station_is_direct(self):
+        source = SPOTS["mui-ne"]["windguru"]
+        self.assertTrue(source["url"].endswith("/station/14164"))
+        self.assertEqual(source["stations"][0]["distance_km"], 0)
+
+    def test_hurghada_spots_share_windguru_reference(self):
+        self.assertIs(SPOTS["kb-zone"]["windguru"], SPOTS["selena-bay"]["windguru"])
+        self.assertEqual(SPOTS["kb-zone"]["windguru"]["stations"][0]["distance_km"], 2.2)
 
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):

@@ -15,6 +15,61 @@ KWIND_SILVAPLANA = {
     "kind": "Externe KWind-Livestation mit Messhistorie",
 }
 
+KWIND_HURGHADA = {
+    "name": "KWind Live",
+    "url": "https://kwind.app/station/64f17bf1779ccbba6bfef479",
+    "history_url": "https://kwind.app/station/64f17bf1779ccbba6bfef479/windhistory",
+    "widget_url": "https://kwind.app/widget/64f17bf1779ccbba6bfef479?background=%230a2026&darkText=false&showHistory=true&show3dMap=false&showData=true&showForecast=false",
+    "station_id": "64f17bf1779ccbba6bfef479",
+    "kind": "Gemeinsame externe KWind-Livestation für KB-Zone und Selena Bay",
+}
+
+# Windguru values stay on Windguru. These entries only link curated nearby
+# live stations whose name and distance could be verified on the spot page.
+WINDGURU_MALCESINE = {
+    "url": "https://www.windguru.cz/49196",
+    "stations": [
+        {"name": "Decollo Malcesine", "distance_km": 4.3},
+        {"name": "Waterproofworld Brenzone", "distance_km": 7.3},
+    ],
+    "note": "See- und Hangstationen getrennt beurteilen; WindAtlas übernimmt keine Windguru-Rohwerte.",
+}
+
+WINDGURU_JAMBIANI = {
+    "url": "https://www.windguru.cz/1095629",
+    "stations": [
+        {"name": "Jambiani Kibijija / Coconuts Kite", "distance_km": 4.6},
+        {"name": "Paje Beach / Mahali Zanzibar", "distance_km": 8.3},
+    ],
+    "note": "Nahe Küstenstationen; Gezeiten und lokale Abschattung bleiben zusätzlich zu prüfen.",
+}
+
+WINDGURU_BERLINGEN = {
+    "url": "https://www.windguru.cz/246339",
+    "stations": [
+        {"name": "Startplatz Rebberg / Windbird", "distance_km": 11.5},
+        {"name": "WSCÜ", "distance_km": 14.4},
+    ],
+    "note": "Regionale Referenz, keine Messung direkt am Kite-Einstieg in Berlingen.",
+}
+
+WINDGURU_HURGHADA = {
+    "url": "https://www.windguru.cz/1251074",
+    "stations": [
+        {"name": "Hurghada / Paradise Kitesurf", "distance_km": 2.2},
+        {"name": "Ohana Kiteboarding", "distance_km": 2.6},
+    ],
+    "note": "Distanzen beziehen sich auf die Windguru-Seite KB-ZONE; Selena Bay liegt im selben Küstenabschnitt.",
+}
+
+WINDGURU_MUI_NE = {
+    "url": "https://www.windguru.cz/station/14164",
+    "stations": [
+        {"name": "Mui Ne C2SKY LIVE WINDSTATION", "distance_km": 0},
+    ],
+    "note": "Direkte Station am C2Sky-Kitecenter; Messwerte und Archiv bleiben bei Windguru.",
+}
+
 SPOTS = {
     "silvaplana": {
         "name": "Silvaplana",
@@ -32,9 +87,9 @@ SPOTS = {
         },
         "school": {
             "name": "Swiss Kitesurf / Kitesailing",
-            "url": "https://www.kitesailing.ch/spot/wetter-kitesurfen",
-            "kind": "Kiteschule direkt am Spot · eigene Live-Wetterseite",
-            "verified": "2026-06-21",
+            "url": "https://www.kitesailing.ch/spot/wetter-wassersport",
+            "kind": "Kiteschule direkt am Spot · Live-Mittelwind, Windspitzen und Windrichtung",
+            "verified": "2026-06-22",
         },
     },
     "viana": {
@@ -60,6 +115,7 @@ SPOTS = {
         "lon": 10.813,
         "station": None,
         "kwind": KWIND,
+        "windguru": WINDGURU_MALCESINE,
         "kite": {"min_kn": 9, "max_kn": 30, "directions": ["N", "S"]},
         "local_note": "Peler am Morgen und Ora am Nachmittag sind thermisch geprägt; Startregeln und Lift-Betrieb beachten.",
         "school": {
@@ -108,6 +164,7 @@ SPOTS = {
         "lon": 39.548,
         "station": None,
         "kwind": KWIND,
+        "windguru": WINDGURU_JAMBIANI,
         "kite": {"min_kn": 10, "max_kn": 31, "directions": ["NE", "E", "SE"]},
         "local_note": "Starker Gezeiteneinfluss in der Lagune; fahrbare Wassertiefe und Riffzugang vor Ort prüfen.",
         "school": {
@@ -124,6 +181,7 @@ SPOTS = {
         "lon": 9.020,
         "station": {"id": "GUT", "name": "Güttingen", "distance_km": 31},
         "kwind": KWIND,
+        "windguru": WINDGURU_BERLINGEN,
         "kite": {"min_kn": 10, "max_kn": 28, "directions": ["W", "NW", "NE", "E"]},
         "local_note": "Die MeteoSchweiz-Station liegt nicht direkt am Spot; KWind und die Sichtprüfung am See ergänzend nutzen.",
         "spotguide": {
@@ -171,7 +229,8 @@ SPOTS = {
         "lat": 27.327,
         "lon": 33.715,
         "station": None,
-        "kwind": KWIND,
+        "kwind": KWIND_HURGHADA,
+        "windguru": WINDGURU_HURGHADA,
         "kite": {"min_kn": 11, "max_kn": 34, "directions": ["N", "NNW", "NW"]},
         "local_note": "KB-Zone liegt im Küstenbereich nördlich von Hurghada bei Selena Bay; Stationssuche zusätzlich über KWind.",
         "school": {
@@ -187,7 +246,8 @@ SPOTS = {
         "lat": 27.3177,
         "lon": 33.7108,
         "station": None,
-        "kwind": KWIND,
+        "kwind": KWIND_HURGHADA,
+        "windguru": WINDGURU_HURGHADA,
         "kite": {"min_kn": 11, "max_kn": 34, "directions": ["N", "NNW", "NW"]},
         "local_note": "Rotes-Meer-Spot mit typischem Nordwind; Windabdeckung, Riff und Centerregeln vor Ort prüfen.",
         "school": {
@@ -204,6 +264,7 @@ SPOTS = {
         "lon": 108.1938,
         "station": None,
         "kwind": KWIND,
+        "windguru": WINDGURU_MUI_NE,
         "kite": {"min_kn": 11, "max_kn": 35, "directions": ["NE", "ENE", "E", "SW", "WSW"]},
         "local_note": "C2Sky liegt direkt am Strand von Mui Ne. Die veröffentlichte Live-Messung stammt aus einer eingebundenen Windguru-Station; Monsunrichtung und Shorebreak vor Ort prüfen.",
         "school": {

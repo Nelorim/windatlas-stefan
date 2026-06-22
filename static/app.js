@@ -189,6 +189,27 @@ function renderSource(data) {
     kwindWidget.removeAttribute('src');
   }
 
+  const windguru = data.spot.windguru;
+  const windguruPanel = $('#windguru-live');
+  const windguruStations = $('#windguru-stations');
+  windguruPanel.hidden = !windguru?.stations?.length;
+  windguruStations.replaceChildren();
+  if (windguru?.stations?.length) {
+    $('#windguru-link').href = windguru.url;
+    text('#windguru-note', windguru.note);
+    windguru.stations.forEach(item => {
+      const card = document.createElement('div');
+      const name = document.createElement('strong');
+      const distance = document.createElement('span');
+      name.textContent = item.name;
+      distance.textContent = item.distance_km === 0 ? 'direkt am Spot' : `${item.distance_km} km entfernt`;
+      card.append(name, distance);
+      windguruStations.append(card);
+    });
+  } else {
+    text('#windguru-note', '');
+  }
+
   const model = data.model;
   $('#model-card').classList.toggle('unavailable', !model.available);
   text('#model-wind', value(model.wind_kn, ' kn'));
