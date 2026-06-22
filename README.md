@@ -18,6 +18,11 @@ Tageskarten und die gemessene Wochenkurve weisen das Böenmaximum zusätzlich mi
 Uhrzeit aus. Die Prognosegrafik wird bei sämtlichen konfigurierten Spots geladen;
 eine gemessene Historie erscheint nur bei tatsächlich angebundener Messstation.
 
+Auf Mobilgeräten bleiben Kennzahlen und Tageskarten in einer einspaltigen,
+lesbaren Ansicht. Nur die eigentliche Kurve lässt sich horizontal wischen; ein
+sichtbarer Hinweis kennzeichnet dies. Die Monatsansicht wechselt unter 520 px
+in eine zweispaltige Tagesliste und erzeugt keinen horizontalen Seitenüberlauf.
+
 ## Was diese Version stabil macht
 
 - Die Startseite lädt **ohne Wetterabfrage**. Externe APIs können den Serverstart nicht mehr blockieren.

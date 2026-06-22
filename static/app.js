@@ -109,17 +109,20 @@ function renderMeasurementHistory() {
       <div><span>Mittlere Richtung</span><strong>${Number.isFinite(direction) ? compass(direction) : '–'}</strong><small>${Number.isFinite(direction) ? `${direction}°` : 'nicht verfügbar'}</small></div>
       <div><span>Messabdeckung</span><strong>${records.length}</strong><small>unveränderte Messpunkte</small></div>
     </div>
-    <div class="measurement-plot week">
-      <div class="measurement-legend"><span><i></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><span>Zahlen: Messwerte in kn · Lücken bleiben sichtbar</span></div>
-      <svg viewBox="0 0 1000 220" role="img" aria-label="Gemessener Windverlauf der letzten sieben Tage">
-        <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
-        ${timelineLines(records, 'gust_kn', start, end, maxValue, 'gust-line', 21)}${timelineLines(records, 'wind_kn', start, end, maxValue, 'wind-line', 21)}
-        ${timelineLabels(records, 'wind_kn', start, end, maxValue, 72, 'measured', 15, 'Europe/Zurich')}
-        ${peakLabelsByDay(records, start, end, maxValue, 'Europe/Zurich')}
-      </svg>
-      <div class="timeline-axis"><span>${dateTime(records[0].time)}</span><b>7 Tage gemessen</b><span>${dateTime(records.at(-1).time)}</span></div>
-      <div class="measurement-hours">${dayCards}</div>
-    </div>`;
+    <div class="measurement-scroll" tabindex="0" aria-label="Messgrafik horizontal scrollbar">
+      <div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div>
+      <div class="measurement-plot week">
+        <div class="measurement-legend"><span><i></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><span>Zahlen: Messwerte in kn · Lücken bleiben sichtbar</span></div>
+        <svg viewBox="0 0 1000 220" role="img" aria-label="Gemessener Windverlauf der letzten sieben Tage">
+          <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
+          ${timelineLines(records, 'gust_kn', start, end, maxValue, 'gust-line', 21)}${timelineLines(records, 'wind_kn', start, end, maxValue, 'wind-line', 21)}
+          ${timelineLabels(records, 'wind_kn', start, end, maxValue, 72, 'measured', 15, 'Europe/Zurich')}
+          ${peakLabelsByDay(records, start, end, maxValue, 'Europe/Zurich')}
+        </svg>
+        <div class="timeline-axis"><span>${dateTime(records[0].time)}</span><b>7 Tage gemessen</b><span>${dateTime(records.at(-1).time)}</span></div>
+      </div>
+    </div>
+    <div class="measurement-hours">${dayCards}</div>`;
   $('#measurement-content').hidden = false;
 }
 
@@ -352,13 +355,13 @@ function renderChart() {
   const labelEvery = state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12;
   const minWidth = state.forecastView === 'day' ? 760 : state.forecastView === 'three' ? 1250 : 1700;
   const cards = `<div class="timeline-days">${timelineDayCards(forecast, start, end, timeZone)}</div>`;
-  chart.innerHTML = `<div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
+  chart.innerHTML = `<div class="timeline-scroll" tabindex="0" aria-label="Prognosegrafik horizontal scrollbar"><div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div><div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
     <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
     ${timelineLines(forecast, 'gust_kn', start, end, maxValue, 'forecast-gust', 91)}
     ${timelineLines(forecast, 'wind_kn', start, end, maxValue, 'forecast-wind', 91)}
     ${timelineLabels(forecast, 'gust_kn', start, end, maxValue, labelEvery, 'gust', -12, timeZone)}
     ${timelineLabels(forecast, 'wind_kn', start, end, maxValue, labelEvery, 'forecast', 17, timeZone)}
-    </svg><div class="timeline-axis"><span>Jetzt · ${timeLabel(new Date(now).toISOString(), timeZone)}</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString(), timeZone)}</span></div>${cards}</div>`;
+    </svg><div class="timeline-axis"><span>Jetzt · ${timeLabel(new Date(now).toISOString(), timeZone)}</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString(), timeZone)}</span></div></div></div>${cards}`;
 }
 
 function historyDirection(records) {

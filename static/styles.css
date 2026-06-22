@@ -14,8 +14,8 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { color-scheme: dark; scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; background: radial-gradient(circle at 80% -10%, #12404a 0, transparent 32rem), var(--bg); color: var(--ink); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+html { color-scheme: dark; scroll-behavior: smooth; max-width: 100%; overflow-x: hidden; }
+body { margin: 0; min-width: 320px; max-width: 100%; overflow-x: hidden; background: radial-gradient(circle at 80% -10%, #12404a 0, transparent 32rem), var(--bg); color: var(--ink); font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 button, a { -webkit-tap-highlight-color: transparent; }
 a { color: inherit; }
 .shell { width: min(1120px, calc(100% - 40px)); margin-inline: auto; }
@@ -95,7 +95,9 @@ h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.04em; }
 .timeline-legend .forecasted { background: repeating-linear-gradient(90deg, var(--cyan) 0 5px, transparent 5px 8px); }
 .timeline-legend .gust { background: #f2c45e; }
 .timeline-legend b { margin-left: auto; color: var(--ink); letter-spacing: .08em; }
-.timeline-chart { overflow-x: auto; }
+.timeline-chart { min-width: 0; max-width: 100%; }
+.timeline-scroll, .measurement-scroll { width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-inline: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.mobile-scroll-hint { display: none; position: sticky; left: 0; width: max-content; color: var(--mint); font-size: 10px; font-weight: 700; letter-spacing: .03em; padding: 2px 0 8px; }
 .timeline-plot { min-width: 760px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: rgba(255,255,255,.02); }
 .timeline-plot svg { display: block; width: 100%; height: 230px; overflow: visible; }
 .timeline-value { fill: var(--ink); font-size: 10px; font-weight: 750; paint-order: stroke; stroke: var(--bg-soft); stroke-width: 4px; stroke-linejoin: round; }
@@ -170,13 +172,14 @@ h2 { margin: 0; font-size: clamp(28px, 4vw, 46px); letter-spacing: -.04em; }
 .history-days { display: grid; grid-template-columns: repeat(7, minmax(105px, 1fr)); gap: 7px; min-width: 760px; }
 .history-summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 .history-summary-grid.five { grid-template-columns: repeat(5, 1fr); }
-.measured-history { border-color: rgba(98, 222, 188, .38); }
+.measured-history { border-color: rgba(98, 222, 188, .38); overflow: hidden; }
 .measurement-days { display: flex; gap: 7px; margin: 20px 0 14px; overflow-x: auto; }
 .measurement-days button { min-width: 88px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.035); color: var(--muted); padding: 9px 12px; cursor: pointer; }
 .measurement-days button.active { color: #062019; background: var(--mint); border-color: var(--mint); font-weight: 750; }
 .measurement-loading { min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 12px; }
 .measurement-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
 .measurement-summary > div { border: 1px solid var(--line); border-radius: 12px; padding: 12px; display: grid; gap: 4px; background: rgba(255,255,255,.025); }
+.measurement-summary > div, .measurement-hour, .timeline-day { min-width: 0; overflow-wrap: anywhere; }
 .measurement-summary span, .measurement-summary small { color: var(--muted); font-size: 10px; }
 .measurement-summary strong { font-size: 20px; }
 .measurement-plot { min-width: 720px; border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: rgba(255,255,255,.02); }
@@ -243,6 +246,35 @@ footer a { color: var(--mint); text-decoration: none; }
   .kwind-live iframe { min-height: 430px; }
   .history-head { display: block; }
   .history-head > a { display: inline-block; margin-top: 10px; }
+  .panel-title { align-items: flex-start; }
+  .panel-title span { line-height: 1.3; }
+  .timeline-tabs { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .timeline-tabs button { padding: 9px 5px; font-size: 11px; white-space: nowrap; }
+  .timeline-legend { gap: 9px 12px; line-height: 1.4; }
+  .timeline-legend b { width: 100%; margin-left: 0; }
+  .mobile-scroll-hint { display: block; }
+  .timeline-scroll, .measurement-scroll { border-radius: 12px; }
+  .timeline-plot, .measurement-plot { padding: 10px; }
+  .timeline-plot svg, .measurement-plot.week svg { height: 210px; }
+  .timeline-value { font-size: 8px; stroke-width: 3px; }
+  .timeline-value.max-gust { font-size: 8px; }
+  .timeline-days, .measurement-hours { min-width: 0; display: grid; grid-template-columns: 1fr; grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; gap: 8px; }
+  .timeline-day, .measurement-hour { padding: 12px; grid-template-columns: minmax(74px, .75fr) 1fr; align-items: baseline; }
+  .timeline-day b, .measurement-hour b { font-size: 11px; }
+  .timeline-day strong, .measurement-hour strong { font-size: 17px; text-align: right; }
+  .timeline-day span, .timeline-day small, .measurement-hour span, .measurement-hour small { font-size: 10px; line-height: 1.4; }
+  .timeline-day small, .measurement-hour small { text-align: right; }
+  .measurement-summary { grid-template-columns: 1fr; }
+  .measurement-summary > div { grid-template-columns: 1fr auto; align-items: baseline; padding: 12px 14px; }
+  .measurement-summary > div strong { grid-column: 2; grid-row: 1 / span 2; text-align: right; }
+  .measurement-summary > div small { grid-column: 1; }
+  .measurement-legend { flex-wrap: wrap; gap: 8px 12px; line-height: 1.4; }
+  .history-content { overflow: visible; }
+  .calendar-weekdays { display: none; }
+  .history-calendar { min-width: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .history-day.empty { display: none; }
+  .history-days { min-width: 0; grid-template-columns: 1fr; }
+  .history-content > .history-stat { max-width: none; }
   .wind-main strong { font-size: 88px; }
   .mini-metrics { grid-template-columns: 1fr 1fr; }
   .mini-metrics div:last-child { display: none; }
