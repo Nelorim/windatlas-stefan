@@ -316,30 +316,46 @@ def direction_name(degrees: float | None) -> str | None:
 
 
 def quality_report(model: dict[str, Any], station: dict[str, Any]) -> dict[str, Any]:
-    score = 45 if model.get("available") else 0
+    # Agreement with a model is useful, but cannot turn a regional station into
+    # an on-spot measurement. Distance therefore imposes a hard, honest ceiling.
+    score = 35 if model.get("available") else 0
     reasons: list[str] = []
     delta = None
     if station.get("available") and station.get("wind_kn") is not None:
-        score += 30
+        score += 35
         distance = station.get("distance_km", 999)
-        if distance <= 15:
-            score += 10
-            reasons.append("Messstation liegt nahe am Spot")
+        if distance <= 1:
+            score += 15
+            ceiling = 100
+            reasons.append("Messstation liegt direkt am Spot")
+        elif distance <= 5:
+            score += 12
+            ceiling = 95
+            reasons.append("Messstation liegt sehr nahe am Spot")
+        elif distance <= 15:
+            score += 5
+            ceiling = 80
+            reasons.append("Messstation ist eine regionale Referenz")
         elif distance <= 30:
-            score += 4
+            score += 2
+            ceiling = 72
             reasons.append("Messstation ist nur regional repräsentativ")
         else:
+            ceiling = 65
             reasons.append("Messstation ist weit entfernt")
         if model.get("wind_kn") is not None:
             delta = round(abs(station["wind_kn"] - model["wind_kn"]), 1)
             if delta <= 3:
-                score += 15
+                score += 10
                 reasons.append("Messung und Modell stimmen gut überein")
             elif delta <= 6:
-                score += 7
+                score += 5
                 reasons.append("Messung und Modell weichen moderat ab")
             else:
                 reasons.append("Messung und Modell weichen stark ab")
+        score = min(score, ceiling)
+        if ceiling < 100:
+            reasons.append(f"Qualität wegen Messdistanz auf {ceiling}/100 begrenzt")
     else:
         reasons.append("Keine aktuelle Stationsmessung verfügbar")
     score = min(score, 100)

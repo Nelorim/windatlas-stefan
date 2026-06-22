@@ -156,13 +156,13 @@ function renderSource(data) {
     $('#station-link').textContent = 'Quelldatei öffnen ↗';
   } else if (kwind) {
     text('#station-provider', kwind.name);
-    text('#station-description', 'Zusätzliches globales Live-Stationsnetz. Werte werden aus Lizenzgründen direkt bei KWind geprüft.');
-    text('#station-label', 'Suche');
-    text('#station-name', data.spot.name);
+    text('#station-description', kwind.kind || 'Zusätzliches globales Live-Stationsnetz. Werte werden aus Lizenzgründen direkt bei KWind geprüft.');
+    text('#station-label', kwind.station_id ? 'Stations-ID' : 'Suche');
+    text('#station-name', kwind.station_id || data.spot.name);
     text('#station-time', 'Live extern');
     text('#station-status', 'Verknüpft');
     $('#station-link').href = kwind.url;
-    $('#station-link').textContent = 'KWind-Station suchen ↗';
+    $('#station-link').textContent = kwind.station_id ? 'KWind Live öffnen ↗' : 'KWind-Station suchen ↗';
   } else {
     text('#station-provider', 'Lokale Messung');
     text('#station-description', 'Noch keine Stationsquelle hinterlegt.');
@@ -171,6 +171,22 @@ function renderSource(data) {
     text('#station-status', 'Offen');
     $('#station-link').href = '#';
     $('#station-link').textContent = 'Quelle vorschlagen';
+  }
+
+  const stationHistoryLink = $('#station-history-link');
+  stationHistoryLink.hidden = !kwind?.history_url;
+  stationHistoryLink.href = kwind?.history_url || '#';
+  stationHistoryLink.textContent = 'KWind-Messhistorie ↗';
+
+  const kwindPanel = $('#kwind-live');
+  const kwindWidget = $('#kwind-widget');
+  kwindPanel.hidden = !kwind?.widget_url;
+  if (kwind?.widget_url) {
+    if (kwindWidget.src !== kwind.widget_url) kwindWidget.src = kwind.widget_url;
+    $('#kwind-live-link').href = kwind.url;
+    $('#kwind-history-link').href = kwind.history_url;
+  } else {
+    kwindWidget.removeAttribute('src');
   }
 
   const model = data.model;

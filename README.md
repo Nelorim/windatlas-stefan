@@ -31,6 +31,10 @@ Die Historie stammt aus der Open-Meteo Historical Weather API. Es handelt sich u
 
 KWind-Daten werden nicht kopiert oder serverseitig weiterverteilt. Die App verlinkt auf die KWind-Stationssuche, weil KWind die Stationsdaten laut eigener Information exklusiv für KWind und Windguru lizenziert. Eine direkte Integration kann ergänzt werden, sobald eine offizielle API-Freigabe vorliegt.
 
+Für Silvaplana ist zusätzlich die vom Nutzer bereitgestellte feste KWind-Station `670cd9f112daffeffb13a8a0` über das offizielle KWind-Widget eingebunden. Livewerte und Messhistorie bleiben dabei technisch bei KWind. MeteoSchweiz Samedan wird nur als regionale Referenz behandelt und kann wegen der Distanz keine Datenqualität von 100/100 mehr erzeugen.
+
+Mui Ne (Vietnam) ist als weiterer Spot enthalten. Die lokale Quelle ist die C2Sky-Webcamseite mit eingebundener Windguru-Livestation `14164`; Open-Meteo bleibt als klar gekennzeichneter Modellvergleich bestehen.
+
 Offizielle Dokumentation:
 
 - [MeteoSchweiz automatische Wetterstationen](https://opendatadocs.meteoswiss.ch/a-data-groundbased/a1-automatic-weather-stations)

@@ -6,6 +6,15 @@ KWIND = {
     "kind": "Zusätzliche Live-Stationen extern prüfen",
 }
 
+KWIND_SILVAPLANA = {
+    "name": "KWind Live",
+    "url": "https://kwind.app/station/670cd9f112daffeffb13a8a0",
+    "history_url": "https://kwind.app/station/670cd9f112daffeffb13a8a0/windhistory",
+    "widget_url": "https://kwind.app/widget/670cd9f112daffeffb13a8a0?background=%230a2026&darkText=false&showHistory=true&show3dMap=false&showData=true&showForecast=false",
+    "station_id": "670cd9f112daffeffb13a8a0",
+    "kind": "Externe KWind-Livestation mit Messhistorie",
+}
+
 SPOTS = {
     "silvaplana": {
         "name": "Silvaplana",
@@ -13,7 +22,7 @@ SPOTS = {
         "lat": 46.459,
         "lon": 9.795,
         "station": {"id": "SAM", "name": "Samedan", "distance_km": 10},
-        "kwind": KWIND,
+        "kwind": KWIND_SILVAPLANA,
         "kite": {"min_kn": 9, "max_kn": 28, "directions": ["S", "SW", "WSW"]},
         "local_note": "Der thermische Malojawind ist lokal geprägt und wird vom Talmodell oft unterschätzt.",
         "spotguide": {
@@ -186,6 +195,22 @@ SPOTS = {
             "url": "https://selenabay.com/home/",
             "kind": "Lokaler Resort- und Wassersportzugang",
             "verified": "2026-06-21",
+        },
+    },
+    "mui-ne": {
+        "name": "Mui Ne",
+        "region": "Phan Thiet · Vietnam",
+        "lat": 10.9412,
+        "lon": 108.1938,
+        "station": None,
+        "kwind": KWIND,
+        "kite": {"min_kn": 11, "max_kn": 35, "directions": ["NE", "ENE", "E", "SW", "WSW"]},
+        "local_note": "C2Sky liegt direkt am Strand von Mui Ne. Die veröffentlichte Live-Messung stammt aus einer eingebundenen Windguru-Station; Monsunrichtung und Shorebreak vor Ort prüfen.",
+        "school": {
+            "name": "C2Sky Kitecenter",
+            "url": "https://c2skykitecenter.com/de/mui-ne-webcam-2/",
+            "kind": "IKO-Kiteschule direkt am Spot · Windguru-Livemessung (Spot 14164) und Webcam",
+            "verified": "2026-06-22",
         },
     },
 }

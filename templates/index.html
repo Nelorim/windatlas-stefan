@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='8.0') }}">
-  <script defer src="{{ url_for('static', filename='app.js', v='8.0') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='8.1') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='8.1') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -81,6 +81,20 @@
           <div class="chart" id="forecast-chart" role="img" aria-label="Windprognose der nächsten Stunden"></div>
         </article>
 
+        <article class="kwind-live panel" id="kwind-live" hidden>
+          <div class="history-head">
+            <div>
+              <div class="panel-title"><span>KWind Live-Messung</span><b>EXTERNES OFFIZIELLES WIDGET</b></div>
+              <p>Messwerte bleiben bei KWind; WindAtlas kopiert oder speichert keine KWind-Rohdaten.</p>
+            </div>
+            <div class="kwind-links">
+              <a id="kwind-live-link" target="_blank" rel="noopener">Station ↗</a>
+              <a id="kwind-history-link" target="_blank" rel="noopener">Messhistorie ↗</a>
+            </div>
+          </div>
+          <iframe id="kwind-widget" title="KWind Live-Messstation" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </article>
+
         <article class="history panel">
           <div class="history-head">
             <div>
@@ -115,7 +129,10 @@
               <div><dt>Zeitpunkt</dt><dd id="station-time">–</dd></div>
               <div><dt>Status</dt><dd id="station-status">–</dd></div>
             </dl>
-            <a id="station-link" target="_blank" rel="noopener">Quelldatei öffnen ↗</a>
+            <div class="source-links">
+              <a id="station-link" target="_blank" rel="noopener">Quelldatei öffnen ↗</a>
+              <a id="station-history-link" target="_blank" rel="noopener" hidden>Messhistorie öffnen ↗</a>
+            </div>
           </article>
 
           <article class="source panel" id="model-card">

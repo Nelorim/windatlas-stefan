@@ -36,13 +36,22 @@ class AppTests(unittest.TestCase):
         expected = {
             "silvaplana", "viana", "malcesine", "colico", "loissin",
             "jambiani", "berlingen", "sulawesi", "softades", "kb-zone",
-            "selena-bay",
+            "selena-bay", "mui-ne",
         }
         self.assertEqual(set(SPOTS), expected)
 
     def test_unhooked_guides_cover_swiss_spots(self):
         self.assertIn("unhooked.ch", SPOTS["silvaplana"]["spotguide"]["url"])
         self.assertIn("unhooked.ch", SPOTS["berlingen"]["spotguide"]["url"])
+
+    def test_fixed_kwind_station_and_history_are_linked(self):
+        kwind = SPOTS["silvaplana"]["kwind"]
+        self.assertEqual(kwind["station_id"], "670cd9f112daffeffb13a8a0")
+        self.assertIn("windhistory", kwind["history_url"])
+
+    def test_mui_ne_uses_c2sky_live_page(self):
+        self.assertIn("c2skykitecenter.com", SPOTS["mui-ne"]["school"]["url"])
+        self.assertIn("14164", SPOTS["mui-ne"]["school"]["kind"])
 
     @patch("app.build_payload")
     def test_wind_endpoint(self, build_payload):
@@ -81,6 +90,12 @@ class QualityTests(unittest.TestCase):
         result = quality_report(model, station)
         self.assertEqual(result["label"], "hoch")
         self.assertEqual(result["delta_kn"], 1)
+
+    def test_regional_station_cannot_claim_full_quality(self):
+        model = {"available": True, "wind_kn": 15}
+        station = {"available": True, "wind_kn": 15, "distance_km": 10}
+        result = quality_report(model, station)
+        self.assertEqual(result["score"], 80)
 
     def test_model_only_is_limited(self):
         result = quality_report({"available": True, "wind_kn": 12}, {"available": False})
