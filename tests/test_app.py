@@ -53,21 +53,21 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_requested_international_spots_are_configured(self):
-        expected = {
-            "silvaplana", "viana", "malcesine", "colico", "loissin",
-            "jambiani", "berlingen", "sulawesi", "softades", "kb-zone",
-            "selena-bay", "mui-ne",
-        }
-        self.assertEqual(set(SPOTS), expected)
+        expected = [
+            "silvaplana", "colico", "berlingen", "loissin", "mui-ne",
+            "jambiani", "selena-bay", "viana", "malcesine", "sulawesi",
+            "softades",
+        ]
+        self.assertEqual(list(SPOTS), expected)
+        self.assertNotIn("kb-zone", SPOTS)
 
     def test_unhooked_guides_cover_swiss_spots(self):
         self.assertIn("unhooked.ch", SPOTS["silvaplana"]["spotguide"]["url"])
         self.assertIn("unhooked.ch", SPOTS["berlingen"]["spotguide"]["url"])
 
-    def test_kwind_is_only_enabled_for_kb_zone(self):
+    def test_kwind_is_not_enabled_after_kb_zone_removal(self):
         linked = {spot_id for spot_id, spot in SPOTS.items() if spot.get("kwind")}
-        self.assertEqual(linked, {"kb-zone"})
-        self.assertEqual(SPOTS["kb-zone"]["kwind"]["station_id"], "64f17bf1779ccbba6bfef479")
+        self.assertEqual(linked, set())
 
     def test_silvaplana_uses_current_kitesailing_weather_page(self):
         source = SPOTS["silvaplana"]["school"]
@@ -83,7 +83,7 @@ class AppTests(unittest.TestCase):
 
     def test_windguru_links_only_have_verified_station_distances(self):
         linked = {spot_id: spot["windguru"] for spot_id, spot in SPOTS.items() if spot.get("windguru")}
-        self.assertEqual(set(linked), {"malcesine", "jambiani", "berlingen", "kb-zone", "selena-bay", "mui-ne"})
+        self.assertEqual(set(linked), {"malcesine", "jambiani", "berlingen", "selena-bay", "mui-ne"})
         for source in linked.values():
             self.assertTrue(source["url"].startswith("https://www.windguru.cz/"))
             self.assertTrue(source["stations"])
@@ -94,9 +94,8 @@ class AppTests(unittest.TestCase):
         self.assertTrue(source["url"].endswith("/station/14164"))
         self.assertEqual(source["stations"][0]["distance_km"], 0)
 
-    def test_hurghada_spots_share_windguru_reference(self):
-        self.assertIs(SPOTS["kb-zone"]["windguru"], SPOTS["selena-bay"]["windguru"])
-        self.assertEqual(SPOTS["kb-zone"]["windguru"]["stations"][0]["distance_km"], 2.2)
+    def test_selena_bay_keeps_hurghada_windguru_reference(self):
+        self.assertEqual(SPOTS["selena-bay"]["windguru"]["stations"][0]["distance_km"], 2.2)
 
     def test_jambiani_uses_direct_windguru_station(self):
         source = SPOTS["jambiani"]["windguru"]

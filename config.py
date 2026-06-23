@@ -1,14 +1,5 @@
 """Curated spot configuration. Keep editorial facts separate from live data."""
 
-KWIND_HURGHADA = {
-    "name": "KWind Live",
-    "url": "https://kwind.app/station/64f17bf1779ccbba6bfef479",
-    "history_url": "https://kwind.app/station/64f17bf1779ccbba6bfef479/windhistory",
-    "widget_url": "https://kwind.app/widget/64f17bf1779ccbba6bfef479?background=%230a2026&darkText=false&showHistory=true&show3dMap=false&showData=true&showForecast=false",
-    "station_id": "64f17bf1779ccbba6bfef479",
-    "kind": "Gemeinsame externe KWind-Livestation für KB-Zone und Selena Bay",
-}
-
 # Windguru values stay on Windguru. These entries only link curated nearby
 # live stations whose name and distance could be verified on the spot page.
 WINDGURU_MALCESINE = {
@@ -43,7 +34,7 @@ WINDGURU_HURGHADA = {
         {"name": "Hurghada / Paradise Kitesurf", "distance_km": 2.2},
         {"name": "Ohana Kiteboarding", "distance_km": 2.6},
     ],
-    "note": "Distanzen beziehen sich auf die Windguru-Seite KB-ZONE; Selena Bay liegt im selben Küstenabschnitt.",
+    "note": "Nahe Windguru-Referenzstationen für Selena Bay im Küstenabschnitt nördlich von Hurghada.",
 }
 
 WINDGURU_MUI_NE = {
@@ -235,23 +226,6 @@ SPOTS = {
             "verified": "2026-06-21",
         },
     },
-    "kb-zone": {
-        "name": "KB-Zone",
-        "region": "Hurghada · Ägypten",
-        "lat": 27.327,
-        "lon": 33.715,
-        "station": None,
-        "kwind": KWIND_HURGHADA,
-        "windguru": WINDGURU_HURGHADA,
-        "kite": {"min_kn": 11, "max_kn": 34, "directions": ["N", "NNW", "NW"]},
-        "local_note": "KB-Zone liegt im Küstenbereich nördlich von Hurghada bei Selena Bay; Stationssuche zusätzlich über KWind.",
-        "school": {
-            "name": "Kiteboarding Zone",
-            "url": "https://kb-zone.com/HOME/",
-            "kind": "Kitecenter im Raum Selena Bay / Hurghada",
-            "verified": "2026-06-21",
-        },
-    },
     "selena-bay": {
         "name": "Selena Bay",
         "region": "Hurghada · Ägypten",
@@ -287,3 +261,20 @@ SPOTS = {
         },
     },
 }
+
+# Product order: nearest/high-priority spots first. Dict insertion order is
+# preserved by Flask/Jinja and therefore controls both navigation and API lists.
+SPOT_ORDER = (
+    "silvaplana",
+    "colico",
+    "berlingen",
+    "loissin",
+    "mui-ne",
+    "jambiani",
+    "selena-bay",
+    "viana",
+    "malcesine",
+    "sulawesi",
+    "softades",
+)
+SPOTS = {spot_id: SPOTS[spot_id] for spot_id in SPOT_ORDER}
