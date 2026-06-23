@@ -318,6 +318,21 @@ function peakLabelsByDay(records, start, end, maxValue, timeZone) {
   }).join('');
 }
 
+function forecastDateRow(records, timeZone) {
+  const keys = [...new Set(records.map(item => localDayKey(item.time, timeZone)))];
+  const now = new Date();
+  const today = localDayKey(now.toISOString(), timeZone);
+  const tomorrowDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const tomorrow = localDayKey(tomorrowDate.toISOString(), timeZone);
+  return `<div class="forecast-date-row" style="grid-template-columns:repeat(${Math.max(1, keys.length)}, minmax(0, 1fr))">${keys.map(key => {
+    const first = records.find(item => localDayKey(item.time, timeZone) === key);
+    const date = first ? new Date(first.time) : new Date(`${key}T12:00:00`);
+    const full = new Intl.DateTimeFormat('de-CH', { timeZone, weekday: 'short', day: '2-digit', month: '2-digit' }).format(date);
+    const title = key === today ? 'Heute' : key === tomorrow ? 'Morgen' : new Intl.DateTimeFormat('de-CH', { timeZone, weekday: 'long' }).format(date);
+    return `<div><b>${title}</b><span>${full}</span></div>`;
+  }).join('')}</div>`;
+}
+
 function renderChart() {
   const chart = $('#forecast-chart');
   const forecast = (state.liveData?.model?.forecast || []).filter(item => new Date(item.time).getTime() >= Date.now() - 60 * 60 * 1000);
@@ -347,7 +362,8 @@ function renderChart() {
   const minWidth = mobile
     ? (state.forecastView === 'day' ? 1000 : state.forecastView === 'three' ? 1500 : 2100)
     : (state.forecastView === 'day' ? 900 : state.forecastView === 'three' ? 1350 : 1800);
-  chart.innerHTML = `<div class="timeline-scroll" tabindex="0" aria-label="Prognosegrafik horizontal scrollbar"><div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div><div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
+  const dateRow = forecastDateRow(visible, timeZone);
+  chart.innerHTML = `<div class="timeline-scroll" tabindex="0" aria-label="Prognosegrafik horizontal scrollbar"><div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div><div class="timeline-plot" style="min-width:${minWidth}px">${dateRow}<svg viewBox="0 0 1000 220">
     <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
     ${timelineLines(forecast, 'gust_kn', start, end, maxValue, 'forecast-gust', 91)}
     ${timelineLines(forecast, 'wind_kn', start, end, maxValue, 'forecast-wind', 91)}
@@ -403,13 +419,6 @@ function renderStatistics(records) {
   const stats = windStatistics(records, state.liveData?.spot?.kite);
   if (!stats) return;
   state.spotStats[state.spot] = { ...stats, name: state.liveData.spot.name };
-  text('#kiteable-days', stats.kiteablePerYear);
-  text('#good-days', stats.goodPerYear);
-  text('#wind-security', `${stats.security}%`);
-  text('#wind-consistency', `${stats.consistency}%`);
-  text('#spot-score', stats.score);
-  $('#score-ring').style.setProperty('--score', stats.score);
-  $('#best-months').innerHTML = stats.top.map((item, index) => `<span>${index + 1}. ${monthName(item.month, true)}</span>`).join('');
   $('#month-overview').innerHTML = stats.monthly.map(item => `<div class="month-card${stats.top.some(top => top.month === item.month) ? ' top' : ''}"><b>${monthName(item.month)}</b><strong>${item.days}</strong><small>gute Tage</small><div class="month-bar"><i style="width:${item.probability}%"></i></div></div>`).join('');
   const sectors = ['N','NE','E','SE','S','SW','W','NW'];
   const counts = Object.fromEntries(sectors.map(name => [name, 0]));
@@ -660,9 +669,6 @@ function render(data) {
   signal.className = `signal ${data.signal.level}`;
   signal.querySelector('b').textContent = data.signal.label;
   text('#signal-reason', data.signal.reason);
-  const decisionTitle = data.signal.level === 'green' ? 'Jetzt im Windfenster' : data.signal.level === 'red' ? 'Aktuell kritisch' : data.signal.level === 'amber' ? 'Aktuell eher zu wenig' : 'Noch keine sichere Aussage';
-  text('#decision-title', decisionTitle);
-  text('#decision-text', `${data.signal.reason} Die Reisebewertung basiert separat auf der 5‑Jahres-Reanalyse.`);
 
   text('#quality-score', data.quality.score);
   text('#quality-label', data.quality.label);

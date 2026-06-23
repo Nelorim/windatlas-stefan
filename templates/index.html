@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.3') }}">
-  <script defer src="{{ url_for('static', filename='app.js', v='10.3') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.4') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='10.4') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -55,13 +55,12 @@
         </div>
 
         <div class="metric-grid primary-live" aria-label="Aktuelle Live-Messung">
-          <article class="quality-card panel">
-            <div class="panel-title"><span class="quality-title"><i class="quality-mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM8 12l3 3 5-6"/></svg></i>Datenqualität</span><b id="quality-label">–</b></div>
-            <div class="quality-score"><strong id="quality-score">–</strong><span>/100</span></div>
-            <div class="quality-track"><span id="quality-bar"></span></div>
-            <ul id="quality-reasons"></ul>
-            <p class="delta" id="model-delta">–</p>
-          </article>
+          <div class="quality-inline panel" aria-label="Datenqualität">
+            <i class="quality-mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM8 12l3 3 5-6"/></svg></i>
+            <span>Datenqualität</span><strong id="quality-score">–</strong><small>/100</small><b id="quality-label">–</b>
+            <i class="quality-inline-track"><span id="quality-bar"></span></i>
+            <ul id="quality-reasons" hidden></ul><p id="model-delta" hidden></p>
+          </div>
 
           <article class="wind-card panel">
             <div class="panel-title live-title"><span id="live-panel-title">Live-Messung</span><b id="live-panel-kind">ECHTE MESSUNG</b></div>
@@ -92,42 +91,6 @@
           <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
           <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
         </article>
-
-        <section class="decision-grid" aria-label="Schnellentscheidung">
-          <article class="decision-card panel">
-            <div class="decision-icon" id="decision-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M4 12h10M10 7l5 5-5 5M17 5c2.5 1.5 3.5 4 3 7"/></svg>
-            </div>
-            <div class="decision-copy">
-              <span class="decision-kicker">SCHNELLENTSCHEIDUNG</span>
-              <h3 id="decision-title">Daten werden ausgewertet</h3>
-              <p id="decision-text">Aktuelle Lage und fünfjährige Windstatistik werden geladen.</p>
-              <div class="best-months" id="best-months"></div>
-            </div>
-            <div class="score-ring" id="score-ring" style="--score:0">
-              <strong id="spot-score">–</strong><span>/100</span><small>Spot Score</small>
-            </div>
-          </article>
-
-          <div class="quick-stats">
-            <article class="quick-stat panel">
-              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M6 3v3M18 3v3M4 8h16M5 5h14v15H5zM8 12h3M13 12h3M8 16h3"/></svg></span>
-              <small>Kitebare Tage</small><strong id="kiteable-days">–</strong><span>pro Jahr</span>
-            </article>
-            <article class="quick-stat panel">
-              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
-              <small>Gute Tage</small><strong id="good-days">–</strong><span>pro Jahr</span>
-            </article>
-            <article class="quick-stat panel">
-              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM8 12l3 3 5-6"/></svg></span>
-              <small>Windsicherheit</small><strong id="wind-security">–</strong><span>Top-Saison</span>
-            </article>
-            <article class="quick-stat panel">
-              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M4 15c2-6 4 3 7-3s5 4 9-3"/></svg></span>
-              <small>Konstanz</small><strong id="wind-consistency">–</strong><span>gute Windtage</span>
-            </article>
-          </div>
-        </section>
 
         <section class="travel-panel panel" aria-labelledby="travel-title">
           <div class="simple-head">
