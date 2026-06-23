@@ -28,16 +28,19 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"WindAtlas", response.data)
         self.assertIn(b"MeteoSchweiz", response.data)
 
-    def test_all_forecast_periods_are_directly_visible(self):
+    def test_forecast_periods_are_graph_only_and_quality_comes_first(self):
         response = self.client.get("/")
-        self.assertIn(b'id="forecast-summaries"', response.data)
+        self.assertNotIn(b'id="forecast-summaries"', response.data)
         self.assertIn(b">24 Stunden<", response.data)
         self.assertIn(b">3 Tage<", response.data)
         self.assertIn(b">7 Tage<", response.data)
         live_position = response.data.index(b'class="metric-grid primary-live"')
+        quality_position = response.data.index(b'class="quality-card panel"')
+        measurement_position = response.data.index(b'class="wind-card panel"')
         forecast_position = response.data.index(b'class="forecast panel primary-forecast"')
         decision_position = response.data.index(b'class="decision-grid"')
         advanced_position = response.data.index(b'id="advanced-data"')
+        self.assertLess(quality_position, measurement_position)
         self.assertLess(live_position, forecast_position)
         self.assertLess(forecast_position, decision_position)
         self.assertLess(forecast_position, advanced_position)

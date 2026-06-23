@@ -318,20 +318,6 @@ function peakLabelsByDay(records, start, end, maxValue, timeZone) {
   }).join('');
 }
 
-function timelineDayCards(forecast, start, end, timeZone) {
-  const cards = [];
-  const keys = [...new Set(forecast.filter(item => { const stamp = new Date(item.time).getTime(); return stamp >= start && stamp <= end; }).map(item => localDayKey(item.time, timeZone)))];
-  keys.forEach(key => {
-    const records = forecast.filter(item => localDayKey(item.time, timeZone) === key);
-    if (!records.length) return;
-    const direction = circularDirection(records);
-    const peak = records.filter(item => Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0];
-    const label = new Intl.DateTimeFormat('de-CH', { timeZone, weekday: 'short', day: '2-digit', month: '2-digit' }).format(new Date(records[0].time));
-    cards.push(`<div class="timeline-day"><b>${label}</b><span class="type">PROGNOSE</span><strong>${value(average(records, 'wind_kn'), ' kn')}</strong><span>${Number.isFinite(direction) ? `${compass(direction)} · ${direction}°` : 'Richtung –'}</span><small>Maximum ${value(peak?.gust_kn, ' kn')} um ${peak ? timeLabel(peak.time, timeZone) : '–'}</small></div>`);
-  });
-  return cards.join('');
-}
-
 function renderChart() {
   const chart = $('#forecast-chart');
   const forecast = (state.liveData?.model?.forecast || []).filter(item => new Date(item.time).getTime() >= Date.now() - 60 * 60 * 1000);
@@ -348,7 +334,7 @@ function renderChart() {
     end = finalRecords.length ? Math.max(...finalRecords.map(item => new Date(item.time).getTime())) : now + days * 24 * 60 * 60 * 1000;
   }
   const visible = forecast.filter(item => { const time = new Date(item.time).getTime(); return time >= start && time <= end; });
-  renderForecastSummaries(forecast, timeZone);
+  text('#forecast-title', state.forecastView === 'day' ? '24‑Stunden-Prognose' : state.forecastView === 'three' ? '3‑Tage-Prognose' : '7‑Tage-Prognose');
   if (!visible.length) {
     chart.innerHTML = '<p>Keine Prognose verfügbar.</p>';
     return;
@@ -361,39 +347,13 @@ function renderChart() {
   const minWidth = mobile
     ? (state.forecastView === 'day' ? 1000 : state.forecastView === 'three' ? 1500 : 2100)
     : (state.forecastView === 'day' ? 900 : state.forecastView === 'three' ? 1350 : 1800);
-  const cards = `<div class="timeline-days">${timelineDayCards(forecast, start, end, timeZone)}</div>`;
   chart.innerHTML = `<div class="timeline-scroll" tabindex="0" aria-label="Prognosegrafik horizontal scrollbar"><div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div><div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
     <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
     ${timelineLines(forecast, 'gust_kn', start, end, maxValue, 'forecast-gust', 91)}
     ${timelineLines(forecast, 'wind_kn', start, end, maxValue, 'forecast-wind', 91)}
     ${timelineLabels(forecast, 'gust_kn', start, end, maxValue, labelEvery, 'gust', -12, timeZone)}
     ${timelineLabels(forecast, 'wind_kn', start, end, maxValue, labelEvery, 'forecast', 17, timeZone)}
-    </svg><div class="timeline-axis"><span>Jetzt · ${timeLabel(new Date(now).toISOString(), timeZone)}</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString(), timeZone)}</span></div></div></div>${cards}`;
-}
-
-function forecastWindow(forecast, hours) {
-  const start = Date.now() - 60 * 60 * 1000;
-  const end = Date.now() + hours * 60 * 60 * 1000;
-  return forecast.filter(item => { const stamp = new Date(item.time).getTime(); return stamp >= start && stamp <= end; });
-}
-
-function renderForecastSummaries(forecast, timeZone) {
-  const target = $('#forecast-summaries');
-  if (!target) return;
-  const periods = [
-    { view: 'day', label: '24 STUNDEN', hours: 24 },
-    { view: 'three', label: '3 TAGE', hours: 72 },
-    { view: 'week', label: '7 TAGE', hours: 168 },
-  ];
-  target.innerHTML = periods.map(period => {
-    const records = forecastWindow(forecast, period.hours);
-    const peak = records.filter(item => Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0];
-    const strongest = records.filter(item => Number.isFinite(item.wind_kn)).sort((a, b) => b.wind_kn - a.wind_kn)[0];
-    return `<button class="forecast-summary${state.forecastView === period.view ? ' active' : ''}" data-summary-view="${period.view}" type="button">
-      <span>${period.label}</span><strong>Ø ${value(average(records, 'wind_kn'), ' kn')}</strong>
-      <small>Max. Wind ${value(strongest?.wind_kn, ' kn')} · Böe ${value(peak?.gust_kn, ' kn')} ${peak ? `um ${timeLabel(peak.time, timeZone)}` : ''}</small>
-    </button>`;
-  }).join('');
+    </svg><div class="timeline-axis"><span>Jetzt · ${timeLabel(new Date(now).toISOString(), timeZone)}</span><b>${days === 1 ? '24 Stunden' : days === 3 ? '3 Tage Prognose' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString(), timeZone)}</span></div></div></div>`;
 }
 
 function historyDirection(records) {
@@ -783,17 +743,6 @@ $$('[data-forecast-view]').forEach(button => button.addEventListener('click', ()
   $$('[data-forecast-view]').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', String(item === button)); });
   renderChart();
 }));
-$('#forecast-summaries').addEventListener('click', event => {
-  const button = event.target.closest('[data-summary-view]');
-  if (!button) return;
-  state.forecastView = button.dataset.summaryView;
-  $$('[data-forecast-view]').forEach(item => {
-    const active = item.dataset.forecastView === state.forecastView;
-    item.classList.toggle('active', active);
-    item.setAttribute('aria-selected', String(active));
-  });
-  renderChart();
-});
 $('#advanced-toggle').addEventListener('click', () => {
   const button = $('#advanced-toggle');
   const open = button.getAttribute('aria-expanded') !== 'true';

@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.1') }}">
-  <script defer src="{{ url_for('static', filename='app.js', v='10.1') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.3') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='10.3') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -55,6 +55,14 @@
         </div>
 
         <div class="metric-grid primary-live" aria-label="Aktuelle Live-Messung">
+          <article class="quality-card panel">
+            <div class="panel-title"><span class="quality-title"><i class="quality-mini-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM8 12l3 3 5-6"/></svg></i>Datenqualität</span><b id="quality-label">–</b></div>
+            <div class="quality-score"><strong id="quality-score">–</strong><span>/100</span></div>
+            <div class="quality-track"><span id="quality-bar"></span></div>
+            <ul id="quality-reasons"></ul>
+            <p class="delta" id="model-delta">–</p>
+          </article>
+
           <article class="wind-card panel">
             <div class="panel-title live-title"><span id="live-panel-title">Live-Messung</span><b id="live-panel-kind">ECHTE MESSUNG</b></div>
             <div class="signal" id="signal"><span></span><b>–</b></div>
@@ -67,24 +75,15 @@
             </div>
             <p class="signal-reason" id="signal-reason"></p>
           </article>
-
-          <article class="quality-card panel">
-            <div class="panel-title"><span>Datenqualität</span><b id="quality-label">–</b></div>
-            <div class="quality-score"><strong id="quality-score">–</strong><span>/100</span></div>
-            <div class="quality-track"><span id="quality-bar"></span></div>
-            <ul id="quality-reasons"></ul>
-            <p class="delta" id="model-delta">–</p>
-          </article>
         </div>
 
         <article class="forecast panel primary-forecast">
           <div class="history-head">
             <div>
-              <div class="panel-title"><span>24‑Stunden-Prognose</span><b>OPEN‑METEO MODELL</b></div>
-              <p>Direkt sichtbar · Mittelwind, maximale Böen und Uhrzeit.</p>
+              <div class="panel-title"><span id="forecast-title">24‑Stunden-Prognose</span><b>OPEN‑METEO MODELL</b></div>
+              <p>Nur als horizontal scrollbare Grafik · Mittelwind, maximale Böen und Uhrzeit.</p>
             </div>
           </div>
-          <div class="forecast-summaries" id="forecast-summaries" aria-label="Prognose-Zusammenfassung"></div>
           <div class="timeline-tabs" role="tablist" aria-label="Zeitraum des Windverlaufs">
             <button data-forecast-view="day" class="active" role="tab" aria-selected="true">24 Stunden</button>
             <button data-forecast-view="three" role="tab" aria-selected="false">3 Tage</button>
