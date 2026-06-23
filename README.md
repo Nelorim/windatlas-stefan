@@ -38,6 +38,7 @@ in eine zweispaltige Tagesliste und erzeugt keinen horizontalen Seitenüberlauf.
 | Quelle | Einordnung | Aktualisierung |
 |---|---|---|
 | MeteoSchweiz SwissMetNet | echte automatische Stationsmessung | 10 Minuten |
+| MeteoSchweiz Silvaplana | offizielle Lokalprognose, Unwetterwarnkarte und Niederschlagsradar als direkte Behörden-Checks | laufend beim Öffnen |
 | Open-Meteo | Wettermodell am Spot, keine Messung | typischerweise 1–6 Stunden je Modell |
 | Windguru Live Wind | verlinkte nahe Messstationen mit geprüfter Distanz; keine kopierten Rohwerte | abhängig von der Station |
 | WeatherLink, Windfinder, Kitecampione | zusätzliche externe Live-Seiten; kein serverseitiges Kopieren | abhängig vom Anbieter |

@@ -650,6 +650,17 @@ function renderSource(data) {
   link.hidden = !school;
 }
 
+function renderSwissWeather(data) {
+  const source = data.spot.meteoswiss;
+  const panel = $('#swiss-weather');
+  panel.hidden = !source;
+  if (!source) return;
+  $('#swiss-forecast-link').href = source.forecast_url;
+  $('#swiss-warning-link').href = source.warning_url;
+  $('#swiss-rain-link').href = source.rain_url;
+  text('#swiss-weather-note', `${source.source_note} Ein grüner Windwert in WindAtlas ersetzt keine Prüfung der offiziellen Warnkarte.`);
+}
+
 function render(data) {
   const live = preferred(data);
   const sourceName = live.type === 'measurement' ? 'MeteoSchweiz Messung' : 'Open‑Meteo Modell';
@@ -679,6 +690,7 @@ function render(data) {
     : data.station.available ? 'Vergleich erst mit Modellwert möglich' : 'Vergleich erst mit Messwert möglich');
 
   renderChart();
+  renderSwissWeather(data);
   renderSource(data);
   const guide = data.spot.spotguide;
   text('#local-note', [data.spot.local_note, guide?.wind_info].filter(Boolean).join(' '));

@@ -76,6 +76,14 @@ class AppTests(unittest.TestCase):
         self.assertTrue(source["url"].endswith("/spot/wetter-wassersport"))
         self.assertIn("Windrichtung", source["kind"])
 
+    def test_silvaplana_has_official_meteoswiss_forecast_and_warning_checks(self):
+        source = SPOTS["silvaplana"]["meteoswiss"]
+        self.assertIn("lokalprognose/silvaplana/7513", source["forecast_url"])
+        self.assertIn("warnkarte", source["warning_url"])
+        self.assertIn("tab=rain", source["rain_url"])
+        self.assertTrue(all("meteoschweiz.admin.ch" in url for key, url in source.items() if key.endswith("_url")))
+        self.assertFalse(any(spot.get("meteoswiss") for spot_id, spot in SPOTS.items() if spot_id != "silvaplana"))
+
     def test_mui_ne_uses_c2sky_live_page(self):
         self.assertIn("c2skykitecenter.com", SPOTS["mui-ne"]["school"]["url"])
         self.assertIn("14164", SPOTS["mui-ne"]["school"]["kind"])

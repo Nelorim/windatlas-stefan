@@ -67,6 +67,12 @@ SPOTS = {
             "kind": "Kiteschule direkt am Spot · Live-Mittelwind, Windspitzen und Windrichtung",
             "verified": "2026-06-22",
         },
+        "meteoswiss": {
+            "forecast_url": "https://www.meteoschweiz.admin.ch/lokalprognose/silvaplana/7513.html",
+            "warning_url": "https://www.meteoschweiz.admin.ch/wetter/gefahren/warnkarte.html",
+            "rain_url": "https://www.meteoschweiz.admin.ch/home.html?tab=rain",
+            "source_note": "Offizielle MeteoSchweiz-Lokalprognose und laufend aktualisierte Warn-/Niederschlagskarten für Silvaplana.",
+        },
     },
     "viana": {
         "name": "Viana do Castelo",

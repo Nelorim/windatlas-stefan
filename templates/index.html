@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.4') }}">
-  <script defer src="{{ url_for('static', filename='app.js', v='10.4') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.5') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='10.5') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -91,6 +91,20 @@
           <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
           <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
         </article>
+
+        <section class="swiss-weather panel" id="swiss-weather" hidden aria-labelledby="swiss-weather-title">
+          <div class="swiss-weather-head">
+            <div class="swiss-cross" aria-hidden="true">+</div>
+            <div><p class="eyebrow">OFFIZIELLE ERGÄNZUNG</p><h3 id="swiss-weather-title">MeteoSchweiz · Silvaplana</h3></div>
+            <span>LIVE PRÜFEN</span>
+          </div>
+          <p id="swiss-weather-note">Warnungen werden direkt bei MeteoSchweiz geprüft und nicht als Entwarnung zwischengespeichert.</p>
+          <div class="swiss-weather-links">
+            <a id="swiss-forecast-link" target="_blank" rel="noopener"><b>Lokalprognose</b><small>7513 Silvaplana · bis 9 Tage</small><span>Öffnen ↗</span></a>
+            <a id="swiss-warning-link" target="_blank" rel="noopener"><b>Unwetterwarnungen</b><small>Wind, Gewitter und weitere Gefahren</small><span>Warnkarte ↗</span></a>
+            <a id="swiss-rain-link" target="_blank" rel="noopener"><b>Regen &amp; Radar</b><small>Aktueller Niederschlag und Prognose</small><span>Radar öffnen ↗</span></a>
+          </div>
+        </section>
 
         <section class="travel-panel panel" aria-labelledby="travel-title">
           <div class="simple-head">
