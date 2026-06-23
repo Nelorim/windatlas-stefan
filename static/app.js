@@ -12,6 +12,7 @@ const state = {
   measurementDay: null,
   liveData: null,
   forecastView: 'three',
+  spotStats: {},
 };
 
 function text(selector, value) { $(selector).textContent = value ?? '–'; }
@@ -116,7 +117,7 @@ function renderMeasurementHistory() {
         <svg viewBox="0 0 1000 220" role="img" aria-label="Gemessener Windverlauf der letzten sieben Tage">
           <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
           ${timelineLines(records, 'gust_kn', start, end, maxValue, 'gust-line', 21)}${timelineLines(records, 'wind_kn', start, end, maxValue, 'wind-line', 21)}
-          ${timelineLabels(records, 'wind_kn', start, end, maxValue, 72, 'measured', 15, 'Europe/Zurich')}
+          ${timelineLabels(records, 'wind_kn', start, end, maxValue, window.innerWidth <= 520 ? 144 : 72, 'measured', 15, 'Europe/Zurich')}
           ${peakLabelsByDay(records, start, end, maxValue, 'Europe/Zurich')}
         </svg>
         <div class="timeline-axis"><span>${dateTime(records[0].time)}</span><b>7 Tage gemessen</b><span>${dateTime(records.at(-1).time)}</span></div>
@@ -347,13 +348,17 @@ function renderChart() {
     end = finalRecords.length ? Math.max(...finalRecords.map(item => new Date(item.time).getTime())) : now + days * 24 * 60 * 60 * 1000;
   }
   const visible = forecast.filter(item => { const time = new Date(item.time).getTime(); return time >= start && time <= end; });
+  renderForecastSummaries(forecast, timeZone);
   if (!visible.length) {
     chart.innerHTML = '<p>Keine Prognose verfügbar.</p>';
     return;
   }
   const maxValue = Math.max(10, ...visible.flatMap(item => [item.wind_kn, item.gust_kn]).filter(Number.isFinite));
-  const labelEvery = state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12;
-  const minWidth = state.forecastView === 'day' ? 760 : state.forecastView === 'three' ? 1250 : 1700;
+  const mobile = window.innerWidth <= 520;
+  const labelEvery = mobile
+    ? (state.forecastView === 'day' ? 4 : state.forecastView === 'three' ? 12 : 24)
+    : (state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12);
+  const minWidth = mobile ? 0 : state.forecastView === 'day' ? 760 : state.forecastView === 'three' ? 1250 : 1700;
   const cards = `<div class="timeline-days">${timelineDayCards(forecast, start, end, timeZone)}</div>`;
   chart.innerHTML = `<div class="timeline-scroll" tabindex="0" aria-label="Prognosegrafik horizontal scrollbar"><div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div><div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
     <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
@@ -364,6 +369,31 @@ function renderChart() {
     </svg><div class="timeline-axis"><span>Jetzt · ${timeLabel(new Date(now).toISOString(), timeZone)}</span><b>${days === 1 ? '24 Stunden' : days === 3 ? 'Nächste Stunden + 2 Tage' : '7 Tage Prognose'}</b><span>${dateTime(new Date(end).toISOString(), timeZone)}</span></div></div></div>${cards}`;
 }
 
+function forecastWindow(forecast, hours) {
+  const start = Date.now() - 60 * 60 * 1000;
+  const end = Date.now() + hours * 60 * 60 * 1000;
+  return forecast.filter(item => { const stamp = new Date(item.time).getTime(); return stamp >= start && stamp <= end; });
+}
+
+function renderForecastSummaries(forecast, timeZone) {
+  const target = $('#forecast-summaries');
+  if (!target) return;
+  const periods = [
+    { view: 'day', label: '24 STUNDEN', hours: 24 },
+    { view: 'three', label: '3 TAGE', hours: 72 },
+    { view: 'week', label: '7 TAGE', hours: 168 },
+  ];
+  target.innerHTML = periods.map(period => {
+    const records = forecastWindow(forecast, period.hours);
+    const peak = records.filter(item => Number.isFinite(item.gust_kn)).sort((a, b) => b.gust_kn - a.gust_kn)[0];
+    const strongest = records.filter(item => Number.isFinite(item.wind_kn)).sort((a, b) => b.wind_kn - a.wind_kn)[0];
+    return `<button class="forecast-summary${state.forecastView === period.view ? ' active' : ''}" data-summary-view="${period.view}" type="button">
+      <span>${period.label}</span><strong>Ø ${value(average(records, 'wind_kn'), ' kn')}</strong>
+      <small>Max. Wind ${value(strongest?.wind_kn, ' kn')} · Böe ${value(peak?.gust_kn, ' kn')} ${peak ? `um ${timeLabel(peak.time, timeZone)}` : ''}</small>
+    </button>`;
+  }).join('');
+}
+
 function historyDirection(records) {
   const counts = {};
   records.forEach(item => { if (item.direction) counts[item.direction] = (counts[item.direction] || 0) + 1; });
@@ -372,6 +402,67 @@ function historyDirection(records) {
 function average(records, key) {
   const values = records.map(item => item[key]).filter(Number.isFinite);
   return values.length ? Math.round(values.reduce((sum, item) => sum + item, 0) / values.length * 10) / 10 : null;
+}
+
+function standardDeviation(values) {
+  if (!values.length) return 0;
+  const mean = values.reduce((sum, number) => sum + number, 0) / values.length;
+  return Math.sqrt(values.reduce((sum, number) => sum + ((number - mean) ** 2), 0) / values.length);
+}
+
+function windStatistics(records, kite) {
+  const valid = records.filter(item => Number.isFinite(item.wind_kn));
+  if (!valid.length || !kite) return null;
+  const min = kite.min_kn; const max = kite.max_kn;
+  const kiteable = valid.filter(item => item.wind_kn >= min && item.wind_kn <= max);
+  const good = kiteable.filter(item => !Number.isFinite(item.gust_kn) || item.gust_kn <= max + 6);
+  const years = new Set(valid.map(item => item.date.slice(0, 4))).size || 1;
+  const monthly = Array.from({ length: 12 }, (_, month) => {
+    const observed = valid.filter(item => Number(item.date.slice(5, 7)) - 1 === month);
+    const positive = good.filter(item => Number(item.date.slice(5, 7)) - 1 === month);
+    return { month, days: Math.round(positive.length / years), probability: observed.length ? Math.round(positive.length / observed.length * 100) : 0 };
+  });
+  const top = [...monthly].sort((a, b) => b.probability - a.probability).slice(0, 3);
+  const winds = good.map(item => item.wind_kn);
+  const mean = winds.length ? winds.reduce((sum, number) => sum + number, 0) / winds.length : 0;
+  const consistency = mean ? Math.max(0, Math.min(100, Math.round(100 - standardDeviation(winds) / mean * 100))) : 0;
+  const security = top.length ? Math.round(top.reduce((sum, item) => sum + item.probability, 0) / top.length) : 0;
+  const goodPerYear = Math.round(good.length / years);
+  const kiteablePerYear = Math.round(kiteable.length / years);
+  const score = Math.round(security * .45 + consistency * .25 + Math.min(100, goodPerYear / 120 * 100) * .3);
+  return { monthly, top, consistency, security, score, goodPerYear, kiteablePerYear, good };
+}
+
+function monthName(month, long = false) {
+  return new Intl.DateTimeFormat('de-CH', { month: long ? 'long' : 'short' }).format(new Date(2024, month, 1));
+}
+
+function renderStatistics(records) {
+  const stats = windStatistics(records, state.liveData?.spot?.kite);
+  if (!stats) return;
+  state.spotStats[state.spot] = { ...stats, name: state.liveData.spot.name };
+  text('#kiteable-days', stats.kiteablePerYear);
+  text('#good-days', stats.goodPerYear);
+  text('#wind-security', `${stats.security}%`);
+  text('#wind-consistency', `${stats.consistency}%`);
+  text('#spot-score', stats.score);
+  $('#score-ring').style.setProperty('--score', stats.score);
+  $('#best-months').innerHTML = stats.top.map((item, index) => `<span>${index + 1}. ${monthName(item.month, true)}</span>`).join('');
+  $('#month-overview').innerHTML = stats.monthly.map(item => `<div class="month-card${stats.top.some(top => top.month === item.month) ? ' top' : ''}"><b>${monthName(item.month)}</b><strong>${item.days}</strong><small>gute Tage</small><div class="month-bar"><i style="width:${item.probability}%"></i></div></div>`).join('');
+  const sectors = ['N','NE','E','SE','S','SW','W','NW'];
+  const counts = Object.fromEntries(sectors.map(name => [name, 0]));
+  stats.good.forEach(item => {
+    if (!Number.isFinite(item.direction_deg)) return;
+    counts[sectors[Math.round(item.direction_deg / 45) % 8]] += 1;
+  });
+  const total = Object.values(counts).reduce((sum, number) => sum + number, 0) || 1;
+  $('#direction-overview').innerHTML = sectors.map(name => `<div class="direction-item"><b>${name}</b><span>${Math.round(counts[name] / total * 100)}%</span></div>`).join('');
+  renderRanking();
+}
+
+function renderRanking() {
+  const entries = Object.entries(state.spotStats).sort((a, b) => b[1].score - a[1].score);
+  $('#ranking-list').innerHTML = entries.length ? entries.slice(0, 5).map(([id, item], index) => `<div class="ranking-row${id === state.spot ? ' active' : ''}"><span>${index + 1}</span><div><b>${item.name}</b><small>${item.goodPerYear} gute Tage/Jahr</small></div><strong>${item.score}</strong></div>`).join('') : '<div class="ranking-loading">Statistik wird geladen …</div>';
 }
 function maximum(records, key) {
   const values = records.map(item => item[key]).filter(Number.isFinite);
@@ -461,6 +552,7 @@ async function loadHistory(spot, spotMeta) {
     state.historyData = data;
     $('#history-source').href = data.source_url;
     renderHistory();
+    renderStatistics(data.records);
   } catch (_) {
     $('#history-error').hidden = false;
   } finally {
@@ -604,6 +696,9 @@ function render(data) {
   signal.className = `signal ${data.signal.level}`;
   signal.querySelector('b').textContent = data.signal.label;
   text('#signal-reason', data.signal.reason);
+  const decisionTitle = data.signal.level === 'green' ? 'Jetzt im Windfenster' : data.signal.level === 'red' ? 'Aktuell kritisch' : data.signal.level === 'amber' ? 'Aktuell eher zu wenig' : 'Noch keine sichere Aussage';
+  text('#decision-title', decisionTitle);
+  text('#decision-text', `${data.signal.reason} Die Reisebewertung basiert separat auf der 5‑Jahres-Reanalyse.`);
 
   text('#quality-score', data.quality.score);
   text('#quality-label', data.quality.label);
@@ -684,6 +779,24 @@ $$('[data-forecast-view]').forEach(button => button.addEventListener('click', ()
   $$('[data-forecast-view]').forEach(item => { item.classList.toggle('active', item === button); item.setAttribute('aria-selected', String(item === button)); });
   renderChart();
 }));
+$('#forecast-summaries').addEventListener('click', event => {
+  const button = event.target.closest('[data-summary-view]');
+  if (!button) return;
+  state.forecastView = button.dataset.summaryView;
+  $$('[data-forecast-view]').forEach(item => {
+    const active = item.dataset.forecastView === state.forecastView;
+    item.classList.toggle('active', active);
+    item.setAttribute('aria-selected', String(active));
+  });
+  renderChart();
+});
+$('#advanced-toggle').addEventListener('click', () => {
+  const button = $('#advanced-toggle');
+  const open = button.getAttribute('aria-expanded') !== 'true';
+  button.setAttribute('aria-expanded', String(open));
+  $('#advanced-data').classList.toggle('open', open);
+  button.querySelector('span').textContent = open ? 'Live-Messungen und Quellen schließen' : 'Live-Messungen und Quellen';
+});
 $('#history-prev').addEventListener('click', () => {
   const step = state.historyView === 'month' ? -1 : -12;
   state.historyDate = new Date(state.historyDate.getFullYear(), state.historyDate.getMonth() + step, 1);

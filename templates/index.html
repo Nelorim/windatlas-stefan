@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='9.3') }}">
-  <script defer src="{{ url_for('static', filename='app.js', v='9.3') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.0') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='10.0') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -54,6 +54,84 @@
           <div class="freshness" id="freshness">–</div>
         </div>
 
+        <section class="decision-grid" aria-label="Schnellentscheidung">
+          <article class="decision-card panel">
+            <div class="decision-icon" id="decision-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 12h10M10 7l5 5-5 5M17 5c2.5 1.5 3.5 4 3 7"/></svg>
+            </div>
+            <div class="decision-copy">
+              <span class="decision-kicker">SCHNELLENTSCHEIDUNG</span>
+              <h3 id="decision-title">Daten werden ausgewertet</h3>
+              <p id="decision-text">Aktuelle Lage und fünfjährige Windstatistik werden geladen.</p>
+              <div class="best-months" id="best-months"></div>
+            </div>
+            <div class="score-ring" id="score-ring" style="--score:0">
+              <strong id="spot-score">–</strong><span>/100</span><small>Spot Score</small>
+            </div>
+          </article>
+
+          <div class="quick-stats">
+            <article class="quick-stat panel">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M6 3v3M18 3v3M4 8h16M5 5h14v15H5zM8 12h3M13 12h3M8 16h3"/></svg></span>
+              <small>Kitebare Tage</small><strong id="kiteable-days">–</strong><span>pro Jahr</span>
+            </article>
+            <article class="quick-stat panel">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span>
+              <small>Gute Tage</small><strong id="good-days">–</strong><span>pro Jahr</span>
+            </article>
+            <article class="quick-stat panel">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6zM8 12l3 3 5-6"/></svg></span>
+              <small>Windsicherheit</small><strong id="wind-security">–</strong><span>Top-Saison</span>
+            </article>
+            <article class="quick-stat panel">
+              <span class="stat-icon"><svg viewBox="0 0 24 24"><path d="M4 15c2-6 4 3 7-3s5 4 9-3"/></svg></span>
+              <small>Konstanz</small><strong id="wind-consistency">–</strong><span>gute Windtage</span>
+            </article>
+          </div>
+        </section>
+
+        <section class="travel-panel panel" aria-labelledby="travel-title">
+          <div class="simple-head">
+            <div><span class="section-icon"><svg viewBox="0 0 24 24"><path d="M6 3v3M18 3v3M4 8h16M5 5h14v15H5z"/></svg></span><div><p class="eyebrow">REISEPLANUNG</p><h3 id="travel-title">Gute Windtage pro Monat</h3></div></div>
+            <small>5‑Jahres-Reanalyse</small>
+          </div>
+          <div class="month-overview" id="month-overview"><div class="skeleton-row"></div></div>
+        </section>
+
+        <section class="insight-grid">
+          <article class="windrose-panel panel">
+            <div class="simple-head"><div><span class="section-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M15 9l-2 4-4 2 2-4z"/></svg></span><div><p class="eyebrow">WINDRICHTUNG</p><h3>Gute Windtage</h3></div></div></div>
+            <div class="direction-overview" id="direction-overview"></div>
+          </article>
+          <article class="ranking-panel panel">
+            <div class="simple-head"><div><span class="section-icon"><svg viewBox="0 0 24 24"><path d="M8 4h8v5c0 3-2 5-4 5s-4-2-4-5zM5 5H3v3c0 2 2 3 5 3M19 5h2v3c0 2-2 3-5 3M12 14v4M8 21h8M9 18h6"/></svg></span><div><p class="eyebrow">SPOT-VERGLEICH</p><h3>Bestes Windfenster</h3></div></div></div>
+            <div class="ranking-list" id="ranking-list"><div class="ranking-loading">Ranking wird geladen …</div></div>
+          </article>
+        </section>
+
+        <article class="forecast panel">
+          <div class="history-head">
+            <div>
+              <div class="panel-title"><span>Mögliche Zukunft</span><b>OPEN‑METEO PROGNOSE</b></div>
+              <p>Nächste Stunden bis sieben Tage · Mittelwind und maximale Böen als Modellwerte.</p>
+            </div>
+          </div>
+          <div class="forecast-summaries" id="forecast-summaries" aria-label="Prognose-Zusammenfassung"></div>
+          <div class="timeline-tabs" role="tablist" aria-label="Zeitraum des Windverlaufs">
+            <button data-forecast-view="day" role="tab" aria-selected="false">24 Stunden</button>
+            <button data-forecast-view="three" class="active" role="tab" aria-selected="true">3 Tage</button>
+            <button data-forecast-view="week" role="tab" aria-selected="false">7 Tage</button>
+          </div>
+          <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
+          <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
+        </article>
+
+        <button class="advanced-toggle" id="advanced-toggle" type="button" aria-expanded="false" aria-controls="advanced-data">
+          <span>Live-Messungen und Quellen</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+
+        <div class="advanced-data" id="advanced-data">
+
         <div class="metric-grid">
           <article class="wind-card panel">
             <div class="signal" id="signal"><span></span><b>–</b></div>
@@ -75,22 +153,6 @@
             <p class="delta" id="model-delta">–</p>
           </article>
         </div>
-
-        <article class="forecast panel">
-          <div class="history-head">
-            <div>
-              <div class="panel-title"><span>Mögliche Zukunft</span><b>OPEN‑METEO PROGNOSE</b></div>
-              <p>Nächste Stunden bis sieben Tage · Mittelwind und maximale Böen als Modellwerte.</p>
-            </div>
-          </div>
-          <div class="timeline-tabs" role="tablist" aria-label="Zeitraum des Windverlaufs">
-            <button data-forecast-view="day" role="tab" aria-selected="false">24 Stunden</button>
-            <button data-forecast-view="three" class="active" role="tab" aria-selected="true">3 Tage</button>
-            <button data-forecast-view="week" role="tab" aria-selected="false">7 Tage</button>
-          </div>
-          <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
-          <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
-        </article>
 
         <article class="kwind-live panel" id="kwind-live" hidden>
           <div class="history-head">
@@ -211,6 +273,7 @@
           <a id="spotguide-link" target="_blank" rel="noopener" hidden>Unhooked Spotguide öffnen ↗</a>
         </aside>
         <p class="disclaimer" id="disclaimer"></p>
+        </div>
       </div>
 
       <div class="error-card" id="error" hidden>

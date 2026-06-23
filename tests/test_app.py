@@ -28,6 +28,16 @@ class AppTests(unittest.TestCase):
         self.assertIn(b"WindAtlas", response.data)
         self.assertIn(b"MeteoSchweiz", response.data)
 
+    def test_all_forecast_periods_are_directly_visible(self):
+        response = self.client.get("/")
+        self.assertIn(b'id="forecast-summaries"', response.data)
+        self.assertIn(b">24 Stunden<", response.data)
+        self.assertIn(b">3 Tage<", response.data)
+        self.assertIn(b">7 Tage<", response.data)
+        forecast_position = response.data.index(b'class="forecast panel"')
+        advanced_position = response.data.index(b'id="advanced-data"')
+        self.assertLess(forecast_position, advanced_position)
+
     def test_javascript_is_revalidated_after_deploy(self):
         response = self.client.get("/static/app.js")
         self.assertEqual(response.status_code, 200)
