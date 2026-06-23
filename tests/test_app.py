@@ -34,8 +34,12 @@ class AppTests(unittest.TestCase):
         self.assertIn(b">24 Stunden<", response.data)
         self.assertIn(b">3 Tage<", response.data)
         self.assertIn(b">7 Tage<", response.data)
-        forecast_position = response.data.index(b'class="forecast panel"')
+        live_position = response.data.index(b'class="metric-grid primary-live"')
+        forecast_position = response.data.index(b'class="forecast panel primary-forecast"')
+        decision_position = response.data.index(b'class="decision-grid"')
         advanced_position = response.data.index(b'id="advanced-data"')
+        self.assertLess(live_position, forecast_position)
+        self.assertLess(forecast_position, decision_position)
         self.assertLess(forecast_position, advanced_position)
 
     def test_javascript_is_revalidated_after_deploy(self):

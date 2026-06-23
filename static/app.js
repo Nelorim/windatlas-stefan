@@ -11,7 +11,7 @@ const state = {
   measurementData: null,
   measurementDay: null,
   liveData: null,
-  forecastView: 'three',
+  forecastView: 'day',
   spotStats: {},
 };
 
@@ -356,9 +356,11 @@ function renderChart() {
   const maxValue = Math.max(10, ...visible.flatMap(item => [item.wind_kn, item.gust_kn]).filter(Number.isFinite));
   const mobile = window.innerWidth <= 520;
   const labelEvery = mobile
-    ? (state.forecastView === 'day' ? 4 : state.forecastView === 'three' ? 12 : 24)
+    ? (state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12)
     : (state.forecastView === 'day' ? 2 : state.forecastView === 'three' ? 6 : 12);
-  const minWidth = mobile ? 0 : state.forecastView === 'day' ? 760 : state.forecastView === 'three' ? 1250 : 1700;
+  const minWidth = mobile
+    ? (state.forecastView === 'day' ? 1000 : state.forecastView === 'three' ? 1500 : 2100)
+    : (state.forecastView === 'day' ? 900 : state.forecastView === 'three' ? 1350 : 1800);
   const cards = `<div class="timeline-days">${timelineDayCards(forecast, start, end, timeZone)}</div>`;
   chart.innerHTML = `<div class="timeline-scroll" tabindex="0" aria-label="Prognosegrafik horizontal scrollbar"><div class="mobile-scroll-hint">↔ Grafik horizontal wischen</div><div class="timeline-plot" style="min-width:${minWidth}px"><svg viewBox="0 0 1000 220">
     <line class="grid" x1="0" y1="205" x2="1000" y2="205"/><line class="grid" x1="0" y1="107" x2="1000" y2="107"/>
@@ -682,6 +684,8 @@ function renderSource(data) {
 function render(data) {
   const live = preferred(data);
   const sourceName = live.type === 'measurement' ? 'MeteoSchweiz Messung' : 'Open‑Meteo Modell';
+  text('#live-panel-title', live.type === 'measurement' ? 'Live-Messung' : 'Aktueller Modellwert');
+  text('#live-panel-kind', live.type === 'measurement' ? 'ECHTE MESSUNG' : 'KEINE DIREKTE MESSUNG');
   text('#spot-title', `${data.spot.name} · ${data.spot.region}`);
   text('#freshness', `Aktualisiert ${dateTime(data.generated_at)}`);
   text('#wind-value', value(live.wind_kn));
@@ -795,7 +799,7 @@ $('#advanced-toggle').addEventListener('click', () => {
   const open = button.getAttribute('aria-expanded') !== 'true';
   button.setAttribute('aria-expanded', String(open));
   $('#advanced-data').classList.toggle('open', open);
-  button.querySelector('span').textContent = open ? 'Live-Messungen und Quellen schließen' : 'Live-Messungen und Quellen';
+  button.querySelector('span').textContent = open ? 'Messdetails und Quellen schließen' : 'Weitere Messdetails und Quellen';
 });
 $('#history-prev').addEventListener('click', () => {
   const step = state.historyView === 'month' ? -1 : -12;

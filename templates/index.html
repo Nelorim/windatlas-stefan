@@ -7,8 +7,8 @@
   <meta name="description" content="WindAtlas vergleicht Stationsmessungen, lokale Quellen und Open-Meteo-Modelle.">
   <title>WindAtlas CH</title>
   <link rel="preconnect" href="https://api.open-meteo.com">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.0') }}">
-  <script defer src="{{ url_for('static', filename='app.js', v='10.0') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css', v='10.1') }}">
+  <script defer src="{{ url_for('static', filename='app.js', v='10.1') }}"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Zum Inhalt</a>
@@ -53,6 +53,46 @@
           <div><p class="eyebrow">AKTUELLE LAGE</p><h2 id="spot-title">–</h2></div>
           <div class="freshness" id="freshness">–</div>
         </div>
+
+        <div class="metric-grid primary-live" aria-label="Aktuelle Live-Messung">
+          <article class="wind-card panel">
+            <div class="panel-title live-title"><span id="live-panel-title">Live-Messung</span><b id="live-panel-kind">ECHTE MESSUNG</b></div>
+            <div class="signal" id="signal"><span></span><b>–</b></div>
+            <div class="wind-main"><strong id="wind-value">–</strong><span>kn</span></div>
+            <div class="wind-direction"><span class="arrow" id="wind-arrow">↑</span><b id="wind-direction">–</b><small id="wind-source">–</small></div>
+            <div class="mini-metrics">
+              <div><span>Böen</span><b id="gust-value">–</b></div>
+              <div><span>Temperatur</span><b id="temp-value">–</b></div>
+              <div><span>Messdistanz</span><b id="distance-value">–</b></div>
+            </div>
+            <p class="signal-reason" id="signal-reason"></p>
+          </article>
+
+          <article class="quality-card panel">
+            <div class="panel-title"><span>Datenqualität</span><b id="quality-label">–</b></div>
+            <div class="quality-score"><strong id="quality-score">–</strong><span>/100</span></div>
+            <div class="quality-track"><span id="quality-bar"></span></div>
+            <ul id="quality-reasons"></ul>
+            <p class="delta" id="model-delta">–</p>
+          </article>
+        </div>
+
+        <article class="forecast panel primary-forecast">
+          <div class="history-head">
+            <div>
+              <div class="panel-title"><span>24‑Stunden-Prognose</span><b>OPEN‑METEO MODELL</b></div>
+              <p>Direkt sichtbar · Mittelwind, maximale Böen und Uhrzeit.</p>
+            </div>
+          </div>
+          <div class="forecast-summaries" id="forecast-summaries" aria-label="Prognose-Zusammenfassung"></div>
+          <div class="timeline-tabs" role="tablist" aria-label="Zeitraum des Windverlaufs">
+            <button data-forecast-view="day" class="active" role="tab" aria-selected="true">24 Stunden</button>
+            <button data-forecast-view="three" role="tab" aria-selected="false">3 Tage</button>
+            <button data-forecast-view="week" role="tab" aria-selected="false">7 Tage</button>
+          </div>
+          <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
+          <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
+        </article>
 
         <section class="decision-grid" aria-label="Schnellentscheidung">
           <article class="decision-card panel">
@@ -109,50 +149,11 @@
           </article>
         </section>
 
-        <article class="forecast panel">
-          <div class="history-head">
-            <div>
-              <div class="panel-title"><span>Mögliche Zukunft</span><b>OPEN‑METEO PROGNOSE</b></div>
-              <p>Nächste Stunden bis sieben Tage · Mittelwind und maximale Böen als Modellwerte.</p>
-            </div>
-          </div>
-          <div class="forecast-summaries" id="forecast-summaries" aria-label="Prognose-Zusammenfassung"></div>
-          <div class="timeline-tabs" role="tablist" aria-label="Zeitraum des Windverlaufs">
-            <button data-forecast-view="day" role="tab" aria-selected="false">24 Stunden</button>
-            <button data-forecast-view="three" class="active" role="tab" aria-selected="true">3 Tage</button>
-            <button data-forecast-view="week" role="tab" aria-selected="false">7 Tage</button>
-          </div>
-          <div class="timeline-legend"><span><i class="forecasted"></i>Mittelwind</span><span><i class="gust"></i>Maximale Böen</span><b>AB JETZT · MODELL</b></div>
-          <div class="timeline-chart" id="forecast-chart" role="img" aria-label="Prognostizierter Windverlauf"></div>
-        </article>
-
         <button class="advanced-toggle" id="advanced-toggle" type="button" aria-expanded="false" aria-controls="advanced-data">
-          <span>Live-Messungen und Quellen</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          <span>Weitere Messdetails und Quellen</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
         </button>
 
         <div class="advanced-data" id="advanced-data">
-
-        <div class="metric-grid">
-          <article class="wind-card panel">
-            <div class="signal" id="signal"><span></span><b>–</b></div>
-            <div class="wind-main"><strong id="wind-value">–</strong><span>kn</span></div>
-            <div class="wind-direction"><span class="arrow" id="wind-arrow">↑</span><b id="wind-direction">–</b><small id="wind-source">–</small></div>
-            <div class="mini-metrics">
-              <div><span>Böen</span><b id="gust-value">–</b></div>
-              <div><span>Temperatur</span><b id="temp-value">–</b></div>
-              <div><span>Messdistanz</span><b id="distance-value">–</b></div>
-            </div>
-            <p class="signal-reason" id="signal-reason"></p>
-          </article>
-
-          <article class="quality-card panel">
-            <div class="panel-title"><span>Datenqualität</span><b id="quality-label">–</b></div>
-            <div class="quality-score"><strong id="quality-score">–</strong><span>/100</span></div>
-            <div class="quality-track"><span id="quality-bar"></span></div>
-            <ul id="quality-reasons"></ul>
-            <p class="delta" id="model-delta">–</p>
-          </article>
-        </div>
 
         <article class="kwind-live panel" id="kwind-live" hidden>
           <div class="history-head">
